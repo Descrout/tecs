@@ -10,24 +10,34 @@ void main() {
     }
   });
 
-  test('equality check should work', () {
+  test('equality check', () {
     final x = ListHash(<int>[2, 1, 3]);
     final y = ListHash(<int>[1, 3, 2]);
-    expect(x == y, true);
+    expect(x, y);
+
+    final a = ListHash(<int>[0]);
+    final b = ListHash(<int>[0], true);
+    expect(a, b);
   });
 
-  test('add and remove should work', () {
+  test('add and remove', () {
     final x = ListHash(<int>[2, 1, 3, 4]);
     final y = ListHash(<int>[1, 3, 2]);
-    expect(x == y, false);
+    expect(x, isNot(y));
 
     x.removeLast();
-    expect(x == y, true);
+    expect(x, y);
 
     y.add(5);
-    expect(x == y, false);
+    expect(x, isNot(y));
 
     x.add(5);
-    expect(x == y, true);
+    expect(x, y);
+  });
+
+  test('copy must be equal to itself', () {
+    final x = ListHash(<int>[2, 1, 3]);
+    final y = x.copy();
+    expect(x, y);
   });
 }

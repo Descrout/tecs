@@ -2,6 +2,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:tecs/component.dart';
 import 'package:tecs/world.dart';
 
+class NameComponent extends Component {
+  NameComponent({
+    required this.name,
+  });
+
+  final String name;
+}
+
 class PositionComponent extends Component {
   PositionComponent({
     required this.x,
@@ -35,21 +43,20 @@ void main() {
     }
   });
 
-  test('registering component should populate component ids, recurring type should not affect', () {
+  test('archetypes must merge instead of adding new', () {
     final world = World();
-    world.registerComponent<PositionComponent>();
-    world.registerComponent<PositionComponent>();
-    world.registerComponent<ColorComponent>();
 
-    expect(world.componentCounter, 2);
-    expect(world.componentCounter, world.componentTypes.length);
+    final entity1 = world.createEntity();
+    final entity2 = world.createEntity();
+
+    world.addComponent(entity1, PositionComponent(x: 3, y: 4));
+    world.addComponent(entity2, PositionComponent(x: 3, y: 4));
+
+    expect(world.archetypeCount, 1);
   });
 
   test('adding component', () {
     final world = World();
-
-    world.registerComponent<PositionComponent>();
-    world.registerComponent<ColorComponent>();
 
     final entity1 = world.createEntity();
     final entity2 = world.createEntity();
@@ -57,15 +64,15 @@ void main() {
 
     world.addComponent(entity1, PositionComponent(x: 3, y: 4));
 
-    world.addComponent(entity2, PositionComponent(x: 3, y: 4));
-    world.addComponent(entity2, ColorComponent(r: 3, g: 4, b: 100));
+    world.addComponent(entity2, PositionComponent(x: 7, y: 8));
+    world.addComponent(entity2, ColorComponent(r: 9, g: 12, b: 111));
 
-    world.addComponent(entity3, ColorComponent(r: 3, g: 4, b: 100));
+    world.addComponent(entity3, ColorComponent(r: 5, g: 6, b: 120));
 
     final pos1 = world.getComponent<PositionComponent>(entity1);
-    final color1 = world.getComponent<ColorComponent>(entity1);
+    final color1Null = world.getComponent<ColorComponent>(entity1);
     expect(pos1, isNotNull);
-    expect(color1, isNull);
+    expect(color1Null, isNull);
     expect(pos1!.x, 3);
 
     final pos2 = world.getComponent<PositionComponent>(entity2);
@@ -74,12 +81,49 @@ void main() {
     expect(color2, isNotNull);
 
     expect(pos1.y, 4);
-    expect(pos1.y, pos2!.y);
+    expect(pos2!.y, 8);
 
-    expect(color2!.r + color2.g + color2.b, 107);
+    expect(color2!.r + color2.g + color2.b, 132);
 
-    //TODO: test => archetypeIndex, entityIndex, componentIndex
-    //TODO: do removeComponent
-    //TODO: do removeEntity
+    world.addComponent(entity1, ColorComponent(r: 65, g: 32, b: 49));
+    world.addComponent(entity2, NameComponent(name: "ent2"));
+    world.addComponent(entity1, NameComponent(name: "ent1"));
+
+    expect(color2.r + color2.g + color2.b, 132);
+
+    final color1 = world.getComponent<ColorComponent>(entity1);
+    expect(color1, isNotNull);
+    expect(color1!.r + color1.g + color1.b, 146);
+  });
+
+  test('removing component', () {
+    final world = World();
+
+    final entity1 = world.createEntity();
+    final entity2 = world.createEntity();
+
+    world.addComponent(entity1, PositionComponent(x: 3, y: 4));
+
+    world.addComponent(entity2, PositionComponent(x: 3, y: 4));
+    world.addComponent(entity2, ColorComponent(r: 3, g: 4, b: 100));
+
+    final color2 = world.getComponent<ColorComponent>(entity2);
+    expect(color2, isNotNull);
+    expect(color2!.b, 100);
+
+    world.removeComponent<ColorComponent>(entity2);
+
+    final color2Null = world.getComponent<ColorComponent>(entity2);
+    expect(color2Null, isNull);
+
+    world.removeComponent<PositionComponent>(entity1);
+    world.addComponent(entity1, NameComponent(name: "ent1"));
+
+    final pos1Null = world.getComponent<PositionComponent>(entity1);
+    expect(pos1Null, isNull);
+
+    final name1 = world.getComponent<NameComponent>(entity1);
+    expect(name1, isNotNull);
+    expect(name1!.name, "ent1");
   });
 }

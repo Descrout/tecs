@@ -1,11 +1,13 @@
-import 'dart:collection';
-
 import 'package:tecs/archetype.dart';
 import 'package:tecs/list_hash.dart';
 import 'package:tecs/tecs.dart';
 import 'package:tecs/types.dart';
 
 class World {
+  //TODO: removeEntity
+  //TODO: query
+  //TODO: systems
+
   final _archetypeIndex = <ListHash, Archetype>{};
   final _entityIndex = <EntityID, Record>{};
   final _componentIndex = <ComponentID, Map<ArchetypeID, int>>{};
@@ -16,9 +18,9 @@ class World {
   int _entityCounter = 0;
   int _archetypeCounter = 0;
 
-  int get componentCounter => _componentCounter;
-
-  UnmodifiableMapView<Type, ComponentID> get componentTypes => UnmodifiableMapView(_componentTypes);
+  int get archetypeCount => _archetypeIndex.length;
+  int get entityCount => _entityIndex.length;
+  int get componentTypesCount => _componentTypes.length;
 
   T? getComponent<T extends Component>(EntityID entityID) {
     final componentID = _componentTypes[T];
@@ -33,33 +35,55 @@ class World {
 
   EntityID createEntity() => _entityCounter++;
 
-  void registerComponent<T extends Component>() {
-    if (!_componentTypes.containsKey(T)) {
-      _componentTypes[T] = _componentCounter++;
-    }
+  ComponentID _getOrCreateComponentID<T extends Component>() {
+    final id = _componentTypes[T];
+    if (id != null) return id;
+    _componentTypes[T] = _componentCounter++;
+    return _componentCounter - 1;
   }
 
-  Archetype _getOrCreateArcheType(ListHash listHash) {
+  Archetype _getOrCreateArchetype(ListHash listHash) {
     Archetype? archetype = _archetypeIndex[listHash];
     if (archetype != null) return archetype;
     final archetypeID = _archetypeCounter++;
     archetype = Archetype(
       id: archetypeID,
-      type: listHash,
+      listHash: listHash,
       components: [],
     );
 
-    _archetypeIndex[archetype.type] = archetype;
+    _archetypeIndex[listHash] = archetype;
     return archetype;
   }
 
-  void _moveEntityAndAdd(
+  void _removeEntityFromArchetype(
+    EntityID entityID,
     Archetype fromArchetype,
     int entityRow,
-    Archetype toArchetype,
-    Component component,
-    EntityID entityID,
   ) {
+    bool recordsFixed = false;
+    for (final compsOfEntity in fromArchetype.components) {
+      if (!recordsFixed) {
+        recordsFixed = true;
+        final compsAfter = compsOfEntity.sublist(entityRow + 1);
+        for (final compToDecrease in compsAfter) {
+          if (compToDecrease.entityID != -1) _entityIndex[compToDecrease.entityID]?.entityRow -= 1;
+        }
+      }
+      compsOfEntity.removeAt(entityRow);
+    }
+
+    _entityIndex.remove(entityID);
+  }
+
+  void _moveEntity(
+    EntityID entityID,
+    Archetype fromArchetype,
+    int entityRow,
+    Archetype toArchetype, {
+    Component? toAdd,
+    ComponentID? toRemove,
+  }) {
     bool recordsFixed = false;
     final removedComps = <Component>[];
     for (final compsOfEntity in fromArchetype.components) {
@@ -70,9 +94,12 @@ class World {
           if (compToDecrease.entityID != -1) _entityIndex[compToDecrease.entityID]?.entityRow -= 1;
         }
       }
-      removedComps.add(compsOfEntity.removeAt(entityRow));
+      final removed = compsOfEntity.removeAt(entityRow);
+      if (toRemove == null || _componentTypes[removed.runtimeType] != toRemove) {
+        removedComps.add(removed);
+      }
     }
-    removedComps.add(component);
+    if (toAdd != null) removedComps.add(toAdd);
     int newEntityRow = -1;
     for (final compToAdd in removedComps) {
       final componentID = _componentTypes[compToAdd.runtimeType]!;
@@ -90,15 +117,15 @@ class World {
     _entityIndex[entityID] = Record(archetype: toArchetype, entityRow: newEntityRow);
   }
 
-  void addComponent(EntityID entityID, Component component) {
+  void addComponent<T extends Component>(EntityID entityID, T component) {
     component.entityID = entityID;
-    final componentID = _componentTypes[component.runtimeType]!;
+    final componentID = _getOrCreateComponentID<T>();
     _componentIndex[componentID] ??= {};
 
     final record = _entityIndex.remove(entityID);
     if (record == null) {
       final listHash = ListHash([componentID], true);
-      final archetype = _getOrCreateArcheType(listHash);
+      final archetype = _getOrCreateArchetype(listHash);
       if (_componentIndex[componentID]![archetype.id] == null) {
         _componentIndex[componentID]![archetype.id] = archetype.components.length;
         archetype.components.add([]);
@@ -109,15 +136,38 @@ class World {
       componentsList.add(component);
     } else {
       final oldArchetype = record.archetype;
-      final listHash = oldArchetype.type.copy();
+      final listHash = oldArchetype.listHash.copy();
       listHash.add(componentID);
-      final archetype = _getOrCreateArcheType(listHash);
-      _moveEntityAndAdd(
+      final archetype = _getOrCreateArchetype(listHash);
+      _moveEntity(
+        entityID,
         oldArchetype,
         record.entityRow,
         archetype,
-        component,
+        toAdd: component,
+      );
+    }
+  }
+
+  void removeComponent<T extends Component>(EntityID entityID) {
+    final record = _entityIndex[entityID];
+    if (record == null) return;
+
+    final componentID = _getOrCreateComponentID<T>();
+    final oldArchetype = record.archetype;
+    final listHash = oldArchetype.listHash.copy();
+    if (!listHash.remove(componentID)) return;
+
+    if (listHash.length == 0) {
+      _removeEntityFromArchetype(entityID, oldArchetype, record.entityRow);
+    } else {
+      final archetype = _getOrCreateArchetype(listHash);
+      _moveEntity(
         entityID,
+        oldArchetype,
+        record.entityRow,
+        archetype,
+        toRemove: componentID,
       );
     }
   }

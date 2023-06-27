@@ -7,20 +7,26 @@ class Record {
     required this.archetype,
     required this.entityRow,
   });
-  Archetype archetype;
+  final Archetype archetype;
   int entityRow;
+
+  @override
+  String toString() => 'Record(entityRow: $entityRow, archetype: $archetype)';
 }
 
 class Archetype {
   Archetype({
     required this.id,
-    required this.type,
+    required this.listHash,
     required this.components,
   });
 
   final ArchetypeID id;
-  final ListHash type;
+  final ListHash listHash;
 
   /// component -> entity
   final List<List<Component>> components;
+
+  @override
+  String toString() => 'Archetype(id: $id, listHash: $listHash, components: $components)';
 }

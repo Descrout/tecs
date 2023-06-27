@@ -9,11 +9,11 @@ class ListHash {
   }
 
   UnmodifiableListView<int> get list => UnmodifiableListView(_list);
-  int get length => list.length;
+  int get length => _list.length;
 
   /// Adds an item to list and return the insertion index
   int add(int e) {
-    //TODO: binary search insertion
+    //TODO: binary search insertion (now O(n))
     for (int i = 0; i < _list.length; i++) {
       if (e < _list[i]) {
         _list.insert(i, e);
@@ -26,6 +26,10 @@ class ListHash {
   }
 
   int removeAt(int index) => _list.removeAt(index);
+
+  //TODO: binarcy search remove (now O(n))
+  bool remove(int id) => _list.remove(id);
+
   int removeLast() => _list.removeLast();
 
   @override
@@ -36,7 +40,10 @@ class ListHash {
   }
 
   @override
-  int get hashCode => _list.hashCode;
+  int get hashCode => Object.hashAll(_list);
 
   ListHash copy() => ListHash(_list, true);
+
+  @override
+  String toString() => 'ListHash(_list: $_list)';
 }
