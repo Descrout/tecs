@@ -126,4 +126,31 @@ void main() {
     expect(name1, isNotNull);
     expect(name1!.name, "ent1");
   });
+
+  test('delete entity', () {
+    final world = World();
+
+    final entity1 = world.createEntity();
+    final entity2 = world.createEntity();
+    final entity3 = world.createEntity();
+
+    world.addComponent(entity1, PositionComponent(x: 3, y: 4));
+
+    world.addComponent(entity2, PositionComponent(x: 3, y: 4));
+    world.addComponent(entity2, ColorComponent(r: 3, g: 4, b: 100));
+
+    world.addComponent(entity3, PositionComponent(x: 3, y: 4));
+    world.addComponent(entity3, ColorComponent(r: 3, g: 4, b: 100));
+
+    expect(world.archetypeCount, 2);
+    expect(world.entityCount, 3);
+
+    expect(world.isAlive(entity2), true);
+    expect(world.deleteEntity(entity2), true);
+
+    expect(world.entityCount, 2);
+
+    expect(world.isAlive(entity2), false);
+    expect(world.deleteEntity(entity2), false);
+  });
 }

@@ -4,12 +4,12 @@ import 'package:tecs/tecs.dart';
 import 'package:tecs/types.dart';
 
 class World {
-  //TODO: removeEntity
   //TODO: query
   //TODO: systems
+  //TODO: addComponent removeComponent graph cache ?
 
   final _archetypeIndex = <ListHash, Archetype>{};
-  final _entityIndex = <EntityID, Record>{};
+  final _entityIndex = <EntityID, Record?>{};
   final _componentIndex = <ComponentID, Map<ArchetypeID, int>>{};
 
   final _componentTypes = <Type, ComponentID>{};
@@ -22,6 +22,16 @@ class World {
   int get entityCount => _entityIndex.length;
   int get componentTypesCount => _componentTypes.length;
 
+  void clear() {
+    _componentTypes.clear();
+    _componentIndex.clear();
+    _entityIndex.clear();
+    _archetypeIndex.clear();
+    _componentCounter = 0;
+    _entityCounter = 0;
+    _archetypeCounter = 0;
+  }
+
   T? getComponent<T extends Component>(EntityID entityID) {
     final componentID = _componentTypes[T];
     final record = _entityIndex[entityID];
@@ -33,7 +43,20 @@ class World {
     return archetype.components[componentRow][record.entityRow] as T?;
   }
 
-  EntityID createEntity() => _entityCounter++;
+  EntityID createEntity() {
+    final entityID = _entityCounter++;
+    _entityIndex[entityID] = null;
+    return entityID;
+  }
+
+  bool deleteEntity(EntityID entityID) {
+    if (!isAlive(entityID)) return false;
+    final record = _entityIndex[entityID];
+    _removeEntityFromArchetype(entityID, record!.archetype, record.entityRow);
+    return true;
+  }
+
+  bool isAlive(EntityID entityID) => _entityIndex.containsKey(entityID);
 
   ComponentID _getOrCreateComponentID<T extends Component>() {
     final id = _componentTypes[T];
