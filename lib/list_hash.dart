@@ -1,31 +1,35 @@
-import 'dart:collection';
-
 class ListHash {
-  final Set<int> _set;
-  ListHash([Iterable<int> arr = const <int>[]]) : _set = arr.toSet();
+  int _value;
 
-  UnmodifiableSetView<int> get set => UnmodifiableSetView(_set);
+  ListHash([int value = 0]) : _value = value;
 
-  int get length => _set.length;
+  factory ListHash.fromIterable([Iterable<int> arr = const <int>[]]) =>
+      ListHash(arr.fold(0, (previousValue, element) => previousValue | element));
+
+  int get value => _value;
 
   void add(int e) {
-    _set.add(e);
+    _value |= e;
   }
 
-  bool remove(int id) => _set.remove(id);
+  bool remove(int e) {
+    if (_value & e != e) return false;
+    _value ^= e;
+    return true;
+  }
 
   bool contains(ListHash other) {
-    return _set.containsAll(other._set);
+    return _value & other.value == other.value;
   }
 
-  ListHash copy() => ListHash(_set.toList());
+  ListHash copy() => ListHash(_value);
 
   @override
   bool operator ==(covariant ListHash other) => hashCode == other.hashCode;
 
   @override
-  int get hashCode => Object.hashAllUnordered(_set);
+  int get hashCode => _value;
 
   @override
-  String toString() => 'ListHash($_set)';
+  String toString() => 'ListHash($_value)';
 }

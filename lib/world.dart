@@ -13,13 +13,12 @@ class World {
 
   final _archetypeIndex = <ListHash, Archetype>{};
   final _entityIndex = <EntityID, Record?>{};
-  final _componentIndex = <ComponentID, Map<ArchetypeID, int>>{};
+  final _componentIndex = <ComponentID, Map<ListHash, int>>{};
 
   final _componentTypes = <Type, ComponentID>{};
 
-  int _componentCounter = 0;
+  int _componentCounter = 2;
   int _entityCounter = 0;
-  int _archetypeCounter = 0;
 
   int get archetypeCount => _archetypeIndex.length;
   int get entityCount => _entityIndex.length;
@@ -30,9 +29,8 @@ class World {
     _componentIndex.clear();
     _entityIndex.clear();
     _archetypeIndex.clear();
-    _componentCounter = 0;
+    _componentCounter = 2;
     _entityCounter = 0;
-    _archetypeCounter = 0;
   }
 
   T? getComponent<T extends Component>(EntityID entityID) {
@@ -41,7 +39,7 @@ class World {
     if (record == null) return null;
     final archetype = record.archetype;
     final archetypes = _componentIndex[componentID];
-    final componentRow = archetypes?[archetype.id];
+    final componentRow = archetypes?[archetype.listHash];
     if (componentRow == null) return null;
     return archetype.components[componentRow][record.entityRow] as T?;
   }
@@ -64,16 +62,15 @@ class World {
   ComponentID _getOrCreateComponentID(Type type) {
     final id = _componentTypes[type];
     if (id != null) return id;
-    _componentTypes[type] = _componentCounter++;
-    return _componentCounter - 1;
+    _componentTypes[type] = _componentCounter;
+    _componentCounter *= 2;
+    return _componentTypes[type]!;
   }
 
   Archetype _getOrCreateArchetype(ListHash listHash) {
     Archetype? archetype = _archetypeIndex[listHash];
     if (archetype != null) return archetype;
-    final archetypeID = _archetypeCounter++;
     archetype = Archetype(
-      id: archetypeID,
       listHash: listHash,
       components: [],
     );
@@ -130,12 +127,13 @@ class World {
     for (final compToAdd in removedComps) {
       final componentID = _componentTypes[compToAdd.runtimeType]!;
       _componentIndex[componentID] ??= {};
-      if (_componentIndex[componentID]![toArchetype.id] == null) {
-        _componentIndex[componentID]![toArchetype.id] = toArchetype.components.length;
+      if (_componentIndex[componentID]![toArchetype.listHash] == null) {
+        _componentIndex[componentID]![toArchetype.listHash] = toArchetype.components.length;
         toArchetype.components.add([]);
       }
 
-      final componentsList = toArchetype.components[_componentIndex[componentID]![toArchetype.id]!];
+      final componentsList =
+          toArchetype.components[_componentIndex[componentID]![toArchetype.listHash]!];
       if (newEntityRow == -1) newEntityRow = componentsList.length;
       componentsList.add(compToAdd);
     }
@@ -150,14 +148,14 @@ class World {
 
     final record = _entityIndex.remove(entityID);
     if (record == null) {
-      final listHash = ListHash([componentID]);
+      final listHash = ListHash(componentID);
       final archetype = _getOrCreateArchetype(listHash);
-      if (_componentIndex[componentID]![archetype.id] == null) {
-        _componentIndex[componentID]![archetype.id] = archetype.components.length;
+      if (_componentIndex[componentID]![listHash] == null) {
+        _componentIndex[componentID]![listHash] = archetype.components.length;
         archetype.components.add([]);
       }
 
-      final componentsList = archetype.components[_componentIndex[componentID]![archetype.id]!];
+      final componentsList = archetype.components[_componentIndex[componentID]![listHash]!];
       _entityIndex[entityID] = Record(archetype: archetype, entityRow: componentsList.length);
       componentsList.add(component);
     } else {
@@ -184,7 +182,7 @@ class World {
     final listHash = oldArchetype.listHash.copy();
     if (!listHash.remove(componentID)) return;
 
-    if (listHash.length == 0) {
+    if (listHash.value == 0) {
       _removeEntityFromArchetype(entityID, oldArchetype, record.entityRow);
     } else {
       final archetype = _getOrCreateArchetype(listHash);
@@ -200,7 +198,7 @@ class World {
 
   Iterable<List<Component>> queryRaw(Iterable<Type> types) {
     final ids = types.map((e) => _getOrCreateComponentID(e));
-    final listHash = ListHash(ids);
+    final listHash = ListHash.fromIterable(ids);
     final queryRows = <List<Component>>[];
     for (final kv in _archetypeIndex.entries) {
       if (kv.value.isEmpty) continue;
@@ -209,7 +207,7 @@ class World {
           final componentsOfEntity = <Component>[];
           for (final componentID in ids) {
             componentsOfEntity
-                .add(kv.value.components[_componentIndex[componentID]![kv.value.id]!][i]);
+                .add(kv.value.components[_componentIndex[componentID]![kv.value.listHash]!][i]);
           }
           queryRows.add(componentsOfEntity);
         }
