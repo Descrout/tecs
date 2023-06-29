@@ -1,5 +1,5 @@
+import 'package:tecs/bit_hash.dart';
 import 'package:tecs/component.dart';
-import 'package:tecs/list_hash.dart';
 
 class Record {
   Record({
@@ -15,11 +15,11 @@ class Record {
 
 class Archetype {
   Archetype({
-    required this.listHash,
+    required this.bitHash,
     required this.components,
   });
 
-  final ListHash listHash;
+  final BitHash bitHash;
 
   /// component -> entity
   final List<List<Component>> components;
@@ -29,5 +29,5 @@ class Archetype {
   int get entityCount => components[0].length;
 
   @override
-  String toString() => 'Archetype(id: ${listHash.value}, components: $components)';
+  String toString() => 'Archetype(id: ${bitHash.value}, components: $components)';
 }

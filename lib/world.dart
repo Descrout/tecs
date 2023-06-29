@@ -1,20 +1,18 @@
 import 'package:tecs/archetype.dart';
-import 'package:tecs/list_hash.dart';
+import 'package:tecs/bit_hash.dart';
 import 'package:tecs/query.dart';
 import 'package:tecs/tecs.dart';
 import 'package:tecs/types.dart';
 
 class World {
-  //TODO: more user friendly query
   //TODO: systems
   //TODO: resources
   //TODO: addComponent removeComponent graph cache ?
-  //TODO: listhash to binary operation or set ?
   //TODO: faster query method ?
 
-  final _archetypeIndex = <ListHash, Archetype>{};
+  final _archetypeIndex = <BitHash, Archetype>{};
   final _entityIndex = <EntityID, Record?>{};
-  final _componentIndex = <ComponentID, Map<ListHash, int>>{};
+  final _componentIndex = <ComponentID, Map<BitHash, int>>{};
 
   final _componentTypes = <Type, ComponentID>{};
 
@@ -40,7 +38,7 @@ class World {
     if (record == null) return null;
     final archetype = record.archetype;
     final archetypes = _componentIndex[componentID];
-    final componentRow = archetypes?[archetype.listHash];
+    final componentRow = archetypes?[archetype.bitHash];
     if (componentRow == null) return null;
     return archetype.components[componentRow][record.entityRow] as T?;
   }
@@ -68,15 +66,15 @@ class World {
     return _componentTypes[type]!;
   }
 
-  Archetype _getOrCreateArchetype(ListHash listHash) {
-    Archetype? archetype = _archetypeIndex[listHash];
+  Archetype _getOrCreateArchetype(BitHash bitHash) {
+    Archetype? archetype = _archetypeIndex[bitHash];
     if (archetype != null) return archetype;
     archetype = Archetype(
-      listHash: listHash,
+      bitHash: bitHash,
       components: [],
     );
 
-    _archetypeIndex[listHash] = archetype;
+    _archetypeIndex[bitHash] = archetype;
     return archetype;
   }
 
@@ -128,13 +126,13 @@ class World {
     for (final compToAdd in removedComps) {
       final componentID = _componentTypes[compToAdd.runtimeType]!;
       _componentIndex[componentID] ??= {};
-      if (_componentIndex[componentID]![toArchetype.listHash] == null) {
-        _componentIndex[componentID]![toArchetype.listHash] = toArchetype.components.length;
+      if (_componentIndex[componentID]![toArchetype.bitHash] == null) {
+        _componentIndex[componentID]![toArchetype.bitHash] = toArchetype.components.length;
         toArchetype.components.add([]);
       }
 
       final componentsList =
-          toArchetype.components[_componentIndex[componentID]![toArchetype.listHash]!];
+          toArchetype.components[_componentIndex[componentID]![toArchetype.bitHash]!];
       if (newEntityRow == -1) newEntityRow = componentsList.length;
       componentsList.add(compToAdd);
     }
@@ -149,21 +147,21 @@ class World {
 
     final record = _entityIndex.remove(entityID);
     if (record == null) {
-      final listHash = ListHash(componentID);
-      final archetype = _getOrCreateArchetype(listHash);
-      if (_componentIndex[componentID]![listHash] == null) {
-        _componentIndex[componentID]![listHash] = archetype.components.length;
+      final bitHash = BitHash(componentID);
+      final archetype = _getOrCreateArchetype(bitHash);
+      if (_componentIndex[componentID]![bitHash] == null) {
+        _componentIndex[componentID]![bitHash] = archetype.components.length;
         archetype.components.add([]);
       }
 
-      final componentsList = archetype.components[_componentIndex[componentID]![listHash]!];
+      final componentsList = archetype.components[_componentIndex[componentID]![bitHash]!];
       _entityIndex[entityID] = Record(archetype: archetype, entityRow: componentsList.length);
       componentsList.add(component);
     } else {
       final oldArchetype = record.archetype;
-      final listHash = oldArchetype.listHash.copy();
-      listHash.add(componentID);
-      final archetype = _getOrCreateArchetype(listHash);
+      final bitHash = oldArchetype.bitHash.copy();
+      bitHash.add(componentID);
+      final archetype = _getOrCreateArchetype(bitHash);
       _moveEntity(
         entityID,
         oldArchetype,
@@ -180,13 +178,13 @@ class World {
 
     final componentID = _getOrCreateComponentID(T);
     final oldArchetype = record.archetype;
-    final listHash = oldArchetype.listHash.copy();
-    if (!listHash.remove(componentID)) return;
+    final bitHash = oldArchetype.bitHash.copy();
+    if (!bitHash.remove(componentID)) return;
 
-    if (listHash.value == 0) {
+    if (bitHash.value == 0) {
       _removeEntityFromArchetype(entityID, oldArchetype, record.entityRow);
     } else {
-      final archetype = _getOrCreateArchetype(listHash);
+      final archetype = _getOrCreateArchetype(bitHash);
       _moveEntity(
         entityID,
         oldArchetype,
@@ -199,16 +197,16 @@ class World {
 
   Iterable<List<Component>> queryRaw(Iterable<Type> types) {
     final ids = types.map((e) => _getOrCreateComponentID(e));
-    final listHash = ListHash.fromIterable(ids);
+    final bitHash = BitHash.fromIterable(ids);
     final queryRows = <List<Component>>[];
     for (final kv in _archetypeIndex.entries) {
       if (kv.value.isEmpty) continue;
-      if (kv.key.contains(listHash)) {
+      if (kv.key.contains(bitHash)) {
         for (int i = 0; i < kv.value.entityCount; i++) {
           final componentsOfEntity = <Component>[];
           for (final componentID in ids) {
             componentsOfEntity
-                .add(kv.value.components[_componentIndex[componentID]![kv.value.listHash]!][i]);
+                .add(kv.value.components[_componentIndex[componentID]![kv.value.bitHash]!][i]);
           }
           queryRows.add(componentsOfEntity);
         }
@@ -220,12 +218,12 @@ class World {
   Query query(Iterable<Type> types) => Query(rows: queryRaw(types).map((e) => QueryRow(e)));
 
   // Iterable<List<Component>> queryRawSorted(Iterable<Type> types) {
-  //   final unsortedListHash = ListHash(types.map((e) => _getOrCreateComponentID(e)), true);
-  //   final listHash = _getOrCreateListHash(unsortedListHash);
+  //   final unsortedbitHash = bitHash(types.map((e) => _getOrCreateComponentID(e)), true);
+  //   final bitHash = _getOrCreatebitHash(unsortedbitHash);
   //   final queryRows = <List<Component>>[];
   //   for (final kv in _archetypeIndex.entries) {
   //     if (kv.value.isEmpty) continue;
-  //     final indices = kv.key.containIndices(listHash);
+  //     final indices = kv.key.containIndices(bitHash);
   //     if (indices.isNotEmpty) {
   //       for (int i = 0; i < kv.value.entityCount; i++) {
   //         final componentsOfEntity = <Component>[];
