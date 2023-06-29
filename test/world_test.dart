@@ -155,7 +155,7 @@ void main() {
     expect(world.deleteEntity(entity2), false);
   });
 
-  test('query', () {
+  test('query raw', () {
     final world = World();
 
     final entity1 = world.createEntity();
@@ -194,6 +194,31 @@ void main() {
       expect(components[0].runtimeType, NameComponent);
       expect((components[0] as NameComponent).name, "ent1");
       expect(components[0].entityID, entity1);
+    }
+  });
+
+  test('query user friendly', () {
+    final world = World();
+
+    final entity1 = world.createEntity();
+    final entity2 = world.createEntity();
+
+    world.addComponent(entity1, PositionComponent(x: 3, y: 4));
+    world.addComponent(entity1, NameComponent(name: "ent1"));
+
+    world.addComponent(entity2, ColorComponent(r: 3, g: 4, b: 100));
+    world.addComponent(entity2, PositionComponent(x: 3, y: 4));
+
+    final queryResult1 = world.query([ColorComponent, PositionComponent]);
+    for (final row in queryResult1.rows) {
+      expect(row.get<PositionComponent>().x, 3);
+      expect(row.get<ColorComponent>().b, 100);
+    }
+
+    final queryResult2 = world.query([NameComponent]);
+    for (final row in queryResult2.rows) {
+      expect(row.get<NameComponent>().name, "ent1");
+      expect(row.entityID, entity1);
     }
   });
 }

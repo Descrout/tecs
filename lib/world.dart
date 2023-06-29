@@ -1,5 +1,6 @@
 import 'package:tecs/archetype.dart';
 import 'package:tecs/list_hash.dart';
+import 'package:tecs/query.dart';
 import 'package:tecs/tecs.dart';
 import 'package:tecs/types.dart';
 
@@ -215,6 +216,8 @@ class World {
     }
     return queryRows;
   }
+
+  Query query(Iterable<Type> types) => Query(rows: queryRaw(types).map((e) => QueryRow(e)));
 
   // Iterable<List<Component>> queryRawSorted(Iterable<Type> types) {
   //   final unsortedListHash = ListHash(types.map((e) => _getOrCreateComponentID(e)), true);

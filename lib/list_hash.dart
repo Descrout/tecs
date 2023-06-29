@@ -8,9 +8,7 @@ class ListHash {
 
   int get value => _value;
 
-  void add(int e) {
-    _value |= e;
-  }
+  void add(int e) => _value |= e;
 
   bool remove(int e) {
     if (_value & e != e) return false;
@@ -18,9 +16,7 @@ class ListHash {
     return true;
   }
 
-  bool contains(ListHash other) {
-    return _value & other.value == other.value;
-  }
+  bool contains(ListHash other) => _value & other.value == other.value;
 
   ListHash copy() => ListHash(_value);
 
