@@ -2,22 +2,18 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:tecs/list_hash.dart';
 
 void main() {
-  test('init sort working', () {
-    final x = ListHash(<int>[2, 1, 3]);
-
-    for (int i = 0; i < x.length; i++) {
-      expect(x.list[i], i + 1);
-    }
-  });
-
   test('equality check', () {
     final x = ListHash(<int>[2, 1, 3]);
     final y = ListHash(<int>[1, 3, 2]);
     expect(x, y);
 
     final a = ListHash(<int>[0]);
-    final b = ListHash(<int>[0], true);
+    final b = ListHash(<int>[0]);
     expect(a, b);
+
+    final k = ListHash(<int>[0, 1, 2]);
+    final m = ListHash(<int>[0, 1, 3]);
+    expect(k, isNot(m));
   });
 
   test('add and remove', () {
@@ -25,7 +21,7 @@ void main() {
     final y = ListHash(<int>[1, 3, 2]);
     expect(x, isNot(y));
 
-    x.removeLast();
+    x.remove(4);
     expect(x, y);
 
     y.add(5);
@@ -48,14 +44,9 @@ void main() {
     final w = ListHash(<int>[1, 4, 5, 2]);
 
     expect(y.contains(x), true);
-    expect(y.containIndices(x), [1, 2, 3]);
     expect(x.contains(y), false);
-    expect(x.containIndices(y), []);
     expect(y.contains(z), true);
-    expect(y.containIndices(z), [1, 2, 4, 6]);
     expect(z.contains(w), false);
-    expect(z.containIndices(w), []);
     expect(w.contains(z), false);
-    expect(w.containIndices(z), []);
   });
 }

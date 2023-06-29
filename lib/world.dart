@@ -17,8 +17,6 @@ class World {
 
   final _componentTypes = <Type, ComponentID>{};
 
-  final _listHashSortCache = <ListHash, ListHash>{};
-
   int _componentCounter = 0;
   int _entityCounter = 0;
   int _archetypeCounter = 0;
@@ -62,12 +60,6 @@ class World {
   }
 
   bool isAlive(EntityID entityID) => _entityIndex.containsKey(entityID);
-
-  ListHash _getOrCreateListHash(ListHash unsorted) {
-    final sorted = _listHashSortCache[unsorted];
-    if (sorted != null) return sorted;
-    return unsorted.copy()..sort();
-  }
 
   ComponentID _getOrCreateComponentID(Type type) {
     final id = _componentTypes[type];
@@ -158,7 +150,7 @@ class World {
 
     final record = _entityIndex.remove(entityID);
     if (record == null) {
-      final listHash = ListHash([componentID], true);
+      final listHash = ListHash([componentID]);
       final archetype = _getOrCreateArchetype(listHash);
       if (_componentIndex[componentID]![archetype.id] == null) {
         _componentIndex[componentID]![archetype.id] = archetype.components.length;
@@ -207,15 +199,15 @@ class World {
   }
 
   Iterable<List<Component>> queryRaw(Iterable<Type> types) {
-    final unsortedListHash = ListHash(types.map((e) => _getOrCreateComponentID(e)), true);
-    final listHash = _getOrCreateListHash(unsortedListHash);
+    final ids = types.map((e) => _getOrCreateComponentID(e));
+    final listHash = ListHash(ids);
     final queryRows = <List<Component>>[];
     for (final kv in _archetypeIndex.entries) {
       if (kv.value.isEmpty) continue;
       if (kv.key.contains(listHash)) {
         for (int i = 0; i < kv.value.entityCount; i++) {
           final componentsOfEntity = <Component>[];
-          for (final componentID in unsortedListHash.list) {
+          for (final componentID in ids) {
             componentsOfEntity
                 .add(kv.value.components[_componentIndex[componentID]![kv.value.id]!][i]);
           }
