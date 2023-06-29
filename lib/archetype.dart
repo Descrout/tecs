@@ -27,6 +27,10 @@ class Archetype {
   /// component -> entity
   final List<List<Component>> components;
 
+  bool get isEmpty => components[0].isEmpty;
+  int get componentCount => components.length;
+  int get entityCount => components[0].length;
+
   @override
   String toString() => 'Archetype(id: $id, listHash: $listHash, components: $components)';
 }

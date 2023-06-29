@@ -40,4 +40,22 @@ void main() {
     final y = x.copy();
     expect(x, y);
   });
+
+  test('containIndices', () {
+    final x = ListHash(<int>[2, 1, 3]);
+    final y = ListHash(<int>[0, 1, 3, 2, 4, 6, 5]);
+    final z = ListHash(<int>[1, 6, 4, 2]);
+    final w = ListHash(<int>[1, 4, 5, 2]);
+
+    expect(y.contains(x), true);
+    expect(y.containIndices(x), [1, 2, 3]);
+    expect(x.contains(y), false);
+    expect(x.containIndices(y), []);
+    expect(y.contains(z), true);
+    expect(y.containIndices(z), [1, 2, 4, 6]);
+    expect(z.contains(w), false);
+    expect(z.containIndices(w), []);
+    expect(w.contains(z), false);
+    expect(w.containIndices(z), []);
+  });
 }

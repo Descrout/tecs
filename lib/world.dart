@@ -4,15 +4,20 @@ import 'package:tecs/tecs.dart';
 import 'package:tecs/types.dart';
 
 class World {
-  //TODO: query
+  //TODO: more user friendly query
   //TODO: systems
+  //TODO: resources
   //TODO: addComponent removeComponent graph cache ?
+  //TODO: listhash to binary operation or set ?
+  //TODO: faster query method ?
 
   final _archetypeIndex = <ListHash, Archetype>{};
   final _entityIndex = <EntityID, Record?>{};
   final _componentIndex = <ComponentID, Map<ArchetypeID, int>>{};
 
   final _componentTypes = <Type, ComponentID>{};
+
+  final _listHashSortCache = <ListHash, ListHash>{};
 
   int _componentCounter = 0;
   int _entityCounter = 0;
@@ -58,10 +63,16 @@ class World {
 
   bool isAlive(EntityID entityID) => _entityIndex.containsKey(entityID);
 
-  ComponentID _getOrCreateComponentID<T extends Component>() {
-    final id = _componentTypes[T];
+  ListHash _getOrCreateListHash(ListHash unsorted) {
+    final sorted = _listHashSortCache[unsorted];
+    if (sorted != null) return sorted;
+    return unsorted.copy()..sort();
+  }
+
+  ComponentID _getOrCreateComponentID(Type type) {
+    final id = _componentTypes[type];
     if (id != null) return id;
-    _componentTypes[T] = _componentCounter++;
+    _componentTypes[type] = _componentCounter++;
     return _componentCounter - 1;
   }
 
@@ -142,7 +153,7 @@ class World {
 
   void addComponent<T extends Component>(EntityID entityID, T component) {
     component.entityID = entityID;
-    final componentID = _getOrCreateComponentID<T>();
+    final componentID = _getOrCreateComponentID(T);
     _componentIndex[componentID] ??= {};
 
     final record = _entityIndex.remove(entityID);
@@ -176,7 +187,7 @@ class World {
     final record = _entityIndex[entityID];
     if (record == null) return;
 
-    final componentID = _getOrCreateComponentID<T>();
+    final componentID = _getOrCreateComponentID(T);
     final oldArchetype = record.archetype;
     final listHash = oldArchetype.listHash.copy();
     if (!listHash.remove(componentID)) return;
@@ -194,4 +205,44 @@ class World {
       );
     }
   }
+
+  Iterable<List<Component>> queryRaw(Iterable<Type> types) {
+    final unsortedListHash = ListHash(types.map((e) => _getOrCreateComponentID(e)), true);
+    final listHash = _getOrCreateListHash(unsortedListHash);
+    final queryRows = <List<Component>>[];
+    for (final kv in _archetypeIndex.entries) {
+      if (kv.value.isEmpty) continue;
+      if (kv.key.contains(listHash)) {
+        for (int i = 0; i < kv.value.entityCount; i++) {
+          final componentsOfEntity = <Component>[];
+          for (final componentID in unsortedListHash.list) {
+            componentsOfEntity
+                .add(kv.value.components[_componentIndex[componentID]![kv.value.id]!][i]);
+          }
+          queryRows.add(componentsOfEntity);
+        }
+      }
+    }
+    return queryRows;
+  }
+
+  // Iterable<List<Component>> queryRawSorted(Iterable<Type> types) {
+  //   final unsortedListHash = ListHash(types.map((e) => _getOrCreateComponentID(e)), true);
+  //   final listHash = _getOrCreateListHash(unsortedListHash);
+  //   final queryRows = <List<Component>>[];
+  //   for (final kv in _archetypeIndex.entries) {
+  //     if (kv.value.isEmpty) continue;
+  //     final indices = kv.key.containIndices(listHash);
+  //     if (indices.isNotEmpty) {
+  //       for (int i = 0; i < kv.value.entityCount; i++) {
+  //         final componentsOfEntity = <Component>[];
+  //         for (final componentIdx in indices) {
+  //           componentsOfEntity.add(kv.value.components[componentIdx][i]);
+  //         }
+  //         queryRows.add(componentsOfEntity);
+  //       }
+  //     }
+  //   }
+  //   return queryRows;
+  // }
 }

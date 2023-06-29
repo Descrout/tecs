@@ -79,11 +79,12 @@ void main() {
     final color2 = world.getComponent<ColorComponent>(entity2);
     expect(pos2, isNotNull);
     expect(color2, isNotNull);
+    expect(color2!.entityID, entity2);
 
     expect(pos1.y, 4);
     expect(pos2!.y, 8);
 
-    expect(color2!.r + color2.g + color2.b, 132);
+    expect(color2.r + color2.g + color2.b, 132);
 
     world.addComponent(entity1, ColorComponent(r: 65, g: 32, b: 49));
     world.addComponent(entity2, NameComponent(name: "ent2"));
@@ -152,5 +153,47 @@ void main() {
 
     expect(world.isAlive(entity2), false);
     expect(world.deleteEntity(entity2), false);
+  });
+
+  test('query', () {
+    final world = World();
+
+    final entity1 = world.createEntity();
+    final entity2 = world.createEntity();
+    final entity3 = world.createEntity();
+
+    world.addComponent(entity1, PositionComponent(x: 3, y: 4));
+    world.addComponent(entity1, NameComponent(name: "ent1"));
+
+    world.addComponent(entity2, PositionComponent(x: 3, y: 4));
+    world.addComponent(entity2, ColorComponent(r: 3, g: 4, b: 100));
+
+    world.addComponent(entity3, ColorComponent(r: 3, g: 4, b: 100));
+    world.addComponent(entity3, PositionComponent(x: 3, y: 4));
+
+    final queryResult1 = world.queryRaw([ColorComponent, PositionComponent]);
+    expect(queryResult1.length, 2);
+    for (final components in queryResult1) {
+      expect(components.length, 2);
+      expect(components[0].runtimeType, ColorComponent);
+      expect(components[1].runtimeType, PositionComponent);
+      expect((components[0] as ColorComponent).b, 100);
+    }
+
+    final queryResult2 = world.queryRaw([PositionComponent]);
+    expect(queryResult2.length, 3);
+    for (final components in queryResult2) {
+      expect(components.length, 1);
+      expect(components[0].runtimeType, PositionComponent);
+    }
+
+    final queryResult3 = world.queryRaw([NameComponent]);
+    expect(queryResult3.length, 1);
+    for (final components in queryResult3) {
+      expect(components.length, 1);
+      expect(components[0].runtimeType, NameComponent);
+      expect((components[0] as NameComponent).name, "ent1");
+      expect(components[0].entityID, entity1);
+    }
   });
 }
