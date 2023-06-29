@@ -2,6 +2,15 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:tecs/component.dart';
 import 'package:tecs/world.dart';
 
+class Foo {
+  int bar = 0;
+}
+
+class FooGeneric<T> {
+  FooGeneric({required this.val});
+  final T val;
+}
+
 class NameComponent extends Component {
   NameComponent({
     required this.name,
@@ -220,5 +229,40 @@ void main() {
       expect(row.get<NameComponent>().name, "ent1");
       expect(row.entityID, entity1);
     }
+  });
+
+  test('resources', () {
+    final world = World();
+    world.addResource(Foo());
+
+    expect(world.getResource<Foo>(), isNotNull);
+    expect(world.getResource<Foo>().runtimeType, Foo);
+    expect(world.getResource<Foo>()!.bar, 0);
+
+    final foo = world.getResource<Foo>();
+    foo!.bar = 12;
+
+    expect(world.getResource<Foo>()!.bar, 12);
+
+    world.addResource(Foo());
+    expect(world.getResource<Foo>()!.bar, 0);
+
+    final foo2 = world.getResource<Foo>();
+    foo2!.bar = 15;
+
+    world.addResource(Foo(), tag: "hello");
+    expect(world.getResource<Foo>()!.bar, 15);
+    expect(world.getResource<Foo>(tag: "hello")!.bar, 0);
+
+    world.addResource(FooGeneric(val: "yoo"));
+    world.addResource(FooGeneric(val: 3.14159));
+
+    expect(world.getResource<FooGeneric<String>>(), isNotNull);
+    expect(world.getResource<FooGeneric<String>>().runtimeType, FooGeneric<String>);
+    expect(world.getResource<FooGeneric<String>>()!.val, "yoo");
+
+    expect(world.getResource<FooGeneric<double>>(), isNotNull);
+    expect(world.getResource<FooGeneric<double>>().runtimeType, FooGeneric<double>);
+    expect(world.getResource<FooGeneric<double>>()!.val, 3.14159);
   });
 }
