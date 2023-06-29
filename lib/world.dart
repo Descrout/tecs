@@ -6,7 +6,6 @@ import 'package:tecs/types.dart';
 
 class World {
   //TODO: systems
-  //TODO: resources
   //TODO: addComponent removeComponent graph cache ?
   //TODO: faster query method ?
 
@@ -15,6 +14,8 @@ class World {
   final _componentIndex = <ComponentID, Map<BitHash, int>>{};
 
   final _componentTypes = <Type, ComponentID>{};
+
+  final _resources = <String, dynamic>{};
 
   int _componentCounter = 2;
   int _entityCounter = 0;
@@ -28,6 +29,7 @@ class World {
     _componentIndex.clear();
     _entityIndex.clear();
     _archetypeIndex.clear();
+    _resources.clear();
     _componentCounter = 2;
     _entityCounter = 0;
   }
@@ -41,6 +43,14 @@ class World {
     final componentRow = archetypes?[archetype.bitHash];
     if (componentRow == null) return null;
     return archetype.components[componentRow][record.entityRow] as T?;
+  }
+
+  T addResource<T>(T resource, {String tag = ""}) {
+    return _resources[T.toString() + tag] = resource;
+  }
+
+  T? getResource<T>({String tag = ""}) {
+    return _resources[T.toString() + tag] as T?;
   }
 
   EntityID createEntity() {
