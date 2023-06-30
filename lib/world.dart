@@ -1,14 +1,8 @@
 import 'package:tecs/archetype.dart';
 import 'package:tecs/bit_hash.dart';
-import 'package:tecs/query.dart';
-import 'package:tecs/system.dart';
 import 'package:tecs/tecs.dart';
-import 'package:tecs/types.dart';
 
 class World {
-  //TODO: addComponent removeComponent graph cache ?
-  //TODO: faster query method ?
-
   final _archetypeIndex = <BitHash, Archetype>{};
   final _entityIndex = <EntityID, Record?>{};
   final _componentIndex = <ComponentID, Map<BitHash, int>>{};

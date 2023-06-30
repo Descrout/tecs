@@ -1,8 +1,7 @@
-import 'package:flutter/foundation.dart';
-import 'package:flutter_test/flutter_test.dart';
 import 'package:tecs/component.dart';
 import 'package:tecs/system.dart';
 import 'package:tecs/world.dart';
+import 'package:test/test.dart';
 
 class FooSystem extends System<double> {
   @override
@@ -10,7 +9,7 @@ class FooSystem extends System<double> {
     final foo = world.getResource<Foo>()!;
     foo.bar += 1;
     final a = deltaTime * foo.bar;
-    debugPrint(a.toString());
+    print(a.toString());
   }
 }
 
@@ -20,7 +19,7 @@ class FooSystemRender extends System<double> {
     final foo = world.getResource<Foo>()!;
     foo.bar += 2;
     final a = deltaTime * foo.bar;
-    debugPrint(a.toString());
+    print(a.toString());
   }
 }
 
