@@ -24,7 +24,8 @@ final entity2 = world.createEntity();
 world.removeEntity(entity1); // returns true
 world.removeEntity(entity2); // returns true
 world.removeEntity(entity1); // returns false, entity1 is not alive
-
+```
+```dart
 // Check Entity Status
 final entity1Status = world.isAlive(entity1);
 if(entity1Status) {
@@ -44,7 +45,8 @@ class PositionComponent extends Component {
   double x;
   double y;
 }
-
+```
+```dart
 class VelocityComponent extends Component {
   VelocityComponent({
     required this.x,
@@ -54,7 +56,8 @@ class VelocityComponent extends Component {
   double x;
   double y;
 }
-
+```
+```dart
 // Add a component to an entity
 world.addComponent(entity1, PositionComponent(x: 150, y: 150));
 world.addComponent(entity1, VelocityComponent(x: -800, y: 400));
@@ -79,31 +82,6 @@ for (final row in queryResult.rows) {
     position.y += velocity.y;
 }
 ```
-## Resources
-```dart
-class GameTime {
-    double seconds = 0;
-}
-
-// Add Resource
-world.addResource(GameTime());
-
-// Get Resource and Manipulate
-final gameTime = world.getResource<GameTime>();
-gameTime.seconds += 1;
-
-// If you add same resource, it will replace the old one
-world.addResource(GameTime()); // replace the old GameTime
-
-// You can give tags to add the same resource type without replacing
-world.addResource(GameTime(), tag: "menu");
-final gameTime = world.getResource<GameTime>();
-final gameTimeMenu = world.getResource<GameTime>(tag: "menu");
-
-// Remove resource
-world.removeResource<GameTime>(); // returns GameTime if the resource exists, null otherwise
-world.removeResource<GameTime>(tag: "menu");
-```
 ## Systems
 ```dart
 // extending with System<T> you can change the type of argument the update function will take.
@@ -122,10 +100,13 @@ class MoveSystem extends System<double> {
     }
   }
 }
-
+```
+```dart
 // Add a system
 world.addSystem(MoveSystem());
+```
 
+```dart
 // Update all systems sequantially (add order matters)
 
 // A game loop that provides 'double deltaTime'
@@ -153,16 +134,16 @@ class RenderSystem extends System<({Canvas canvas, Size size})> {
     }
   }
 }
-
+```
+```dart
 // Add the system with tag
 world.addSystem(MoveSystem()); // default
 world.addSystem(CollisionSystem()); // default
 
 world.addSystem(RenderSystem(), tag: "render");
 world.addSystem(RenderCollidersDebug(), tag: "render");
-
-// ** Update and pass differently **
-
+```
+```dart
 // A game loop that provides 'double deltaTime'
 world.update(deltaTime); // MoveSystem and CollisionSystem will run
 // A game loop that provides 'double deltaTime'
@@ -170,4 +151,29 @@ world.update(deltaTime); // MoveSystem and CollisionSystem will run
 // A render loop that provides canvas and size
 world.update(canvas, size, tag: "render"); // RenderSystem and RenderCollidersDebug will run
 // A render loop that provides canvas and size
+```
+## Resources
+```dart
+class GameTime {
+    double seconds = 0;
+}
+
+// Add Resource
+world.addResource(GameTime());
+
+// Get Resource and Manipulate
+final gameTime = world.getResource<GameTime>();
+gameTime.seconds += 1;
+
+// If you add same resource, it will replace the old one
+world.addResource(GameTime()); // replace the old GameTime
+
+// You can give tags to add the same resource type without replacing
+world.addResource(GameTime(), tag: "menu");
+final gameTime = world.getResource<GameTime>();
+final gameTimeMenu = world.getResource<GameTime>(tag: "menu");
+
+// Remove resource
+world.removeResource<GameTime>(); // returns GameTime if the resource exists, null otherwise
+world.removeResource<GameTime>(tag: "menu");
 ```
