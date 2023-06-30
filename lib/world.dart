@@ -65,13 +65,17 @@ class World {
     return _resources[T.toString() + tag] as T?;
   }
 
+  T? removeResource<T>({String tag = ""}) {
+    return _resources.remove(T.toString() + tag) as T?;
+  }
+
   EntityID createEntity() {
     final entityID = _entityCounter++;
     _entityIndex[entityID] = null;
     return entityID;
   }
 
-  bool deleteEntity(EntityID entityID) {
+  bool removeEntity(EntityID entityID) {
     if (!isAlive(entityID)) return false;
     final record = _entityIndex[entityID];
     _removeEntityFromArchetype(entityID, record!.archetype, record.entityRow);

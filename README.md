@@ -1,4 +1,173 @@
 # TECS
 
-Simple archetype based ECS(entity-component-system) written in dart.  
-Made for learning purposes so keep that in mind before using it.
+Simple archetype based ECS written in dart.  
+Made for learning purposes so keep that in mind before using it.  
+Any improvements or suggestions are welcome.
+
+## World
+```dart
+import 'package:tecs/tecs.dart';
+
+// Create a World
+final world = World();
+
+// Reset and Clear the World
+world.clear();
+```
+## Entities
+```dart
+// Create Entities
+final entity1 = world.createEntity();
+final entity2 = world.createEntity();
+
+// Remove Entities
+world.removeEntity(entity1); // returns true
+world.removeEntity(entity2); // returns true
+world.removeEntity(entity1); // returns false, entity1 is not alive
+
+// Check Entity Status
+final entity1Status = world.isAlive(entity1);
+if(entity1Status) {
+  print("entity1 is alive");
+} else {
+  print("entity1 is dead");
+}
+```
+## Components
+```dart
+class PositionComponent extends Component {
+  PositionComponent({
+    required this.x,
+    required this.y,
+  });
+
+  double x;
+  double y;
+}
+
+class VelocityComponent extends Component {
+  VelocityComponent({
+    required this.x,
+    required this.y,
+  });
+
+  double x;
+  double y;
+}
+
+// Add a component to an entity
+world.addComponent(entity1, PositionComponent(x: 150, y: 150));
+world.addComponent(entity1, VelocityComponent(x: -800, y: 400));
+
+// Get component of an entity (returns null if the entity does not have the component)
+final position = world.getComponent<PositionComponent>(entity1);
+final velocity = world.getComponent<VelocityComponent>(entity1);
+
+// Remove a component
+world.removeComponent<PositionComponent>(entity1);
+world.removeComponent<VelocityComponent>(entity1);
+```
+## Queries
+```dart
+final queryResult = world.query([PositionComponent, VelocityComponent]);
+
+for (final row in queryResult.rows) {
+    final position = row.get<PositionComponent>();
+    final velocity = row.get<VelocityComponent>();
+
+    position.x += velocity.x;
+    position.y += velocity.y;
+}
+```
+## Resources
+```dart
+class GameTime {
+    double seconds = 0;
+}
+
+// Add Resource
+world.addResource(GameTime());
+
+// Get Resource and Manipulate
+final gameTime = world.getResource<GameTime>();
+gameTime.seconds += 1;
+
+// If you add same resource, it will replace the old one
+world.addResource(GameTime()); // replace the old GameTime
+
+// You can give tags to add the same resource type without replacing
+world.addResource(GameTime(), tag: "menu");
+final gameTime = world.getResource<GameTime>();
+final gameTimeMenu = world.getResource<GameTime>(tag: "menu");
+
+// Remove resource
+world.removeResource<GameTime>(); // returns GameTime if the resource exists, null otherwise
+world.removeResource<GameTime>(tag: "menu");
+```
+## Systems
+```dart
+// extending with System<T> you can change the type of argument the update function will take.
+class MoveSystem extends System<double> {
+  @override
+  void update(double deltaTime) {
+    // has access to the world
+    final queryResult = world.query([PositionComponent, VelocityComponent]);
+
+    for (final row in queryResult.rows) {
+        final position = row.get<PositionComponent>();
+        final velocity = row.get<VelocityComponent>();
+
+        position.x += velocity.x * deltaTime;
+        position.y += velocity.y * deltaTime;
+    }
+  }
+}
+
+// Add a system
+world.addSystem(MoveSystem());
+
+// Update all systems sequantially (add order matters)
+
+// A game loop that provides 'double deltaTime'
+world.update(deltaTime);
+// A game loop that provides 'double deltaTime'
+```
+## System Tags
+```dart
+// You can give tags to your systems to update differently and pass different arguments.
+// You can use the new records capability dart3 provides to accept multiple arguments
+class RenderSystem extends System<({Canvas canvas, Size size})> {
+  @override
+  void update(args) {
+    final queryResult = world.query([RectComponent, ColorComponent]);
+
+    for (final row in queryResult.rows) {
+        final rect = row.get<RectComponent>();
+        final color = row.get<ColorComponent>();
+
+        final paint = Paint()
+            ..color = color.value
+            ..style = PaintingStyle.fill;
+
+        args.canvas.drawRect(rect.value, paint);
+    }
+  }
+}
+
+// Add the system with tag
+world.addSystem(MoveSystem()); // default
+world.addSystem(CollisionSystem()); // default
+
+world.addSystem(RenderSystem(), tag: "render");
+world.addSystem(RenderCollidersDebug(), tag: "render");
+
+// ** Update and pass differently **
+
+// A game loop that provides 'double deltaTime'
+world.update(deltaTime); // MoveSystem and CollisionSystem will run
+// A game loop that provides 'double deltaTime'
+
+// A render loop that provides canvas and size
+world.update(canvas, size, tag: "render"); // RenderSystem and RenderCollidersDebug will run
+// A render loop that provides canvas and size
+```

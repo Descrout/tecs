@@ -1,6 +1,4 @@
-import 'package:tecs/component.dart';
-import 'package:tecs/system.dart';
-import 'package:tecs/world.dart';
+import 'package:tecs/tecs.dart';
 import 'package:test/test.dart';
 
 class FooSystem extends System<double> {
@@ -13,13 +11,15 @@ class FooSystem extends System<double> {
   }
 }
 
-class FooSystemRender extends System<double> {
+class BarSystem extends System<({int number, String message})> {
   @override
-  void update(double deltaTime) {
+  void update(args) {
     final foo = world.getResource<Foo>()!;
     foo.bar += 2;
-    final a = deltaTime * foo.bar;
-    print(a.toString());
+
+    for (int i = 0; i < args.number; i++) {
+      print(args.message);
+    }
   }
 }
 
@@ -177,12 +177,12 @@ void main() {
     expect(world.entityCount, 3);
 
     expect(world.isAlive(entity2), true);
-    expect(world.deleteEntity(entity2), true);
+    expect(world.removeEntity(entity2), true);
 
     expect(world.entityCount, 2);
 
     expect(world.isAlive(entity2), false);
-    expect(world.deleteEntity(entity2), false);
+    expect(world.removeEntity(entity2), false);
   });
 
   test('query raw', () {
@@ -248,7 +248,7 @@ void main() {
     final queryResult2 = world.query([NameComponent]);
     for (final row in queryResult2.rows) {
       expect(row.get<NameComponent>().name, "ent1");
-      expect(row.entityID, entity1);
+      expect(row.entity, entity1);
     }
   });
 
@@ -294,14 +294,14 @@ void main() {
 
     world.addResource(foo);
     world.addSystem(FooSystem());
-    world.addSystem(FooSystemRender(), tag: "render");
+    world.addSystem(BarSystem(), tag: "bar");
 
     world.update(0.016);
     world.update(0.016);
     world.update(0.016);
     world.update(0.016);
 
-    world.update(0.016, tag: "render");
+    world.update((number: 3, message: "Hello World"), tag: "bar");
 
     expect(foo.bar, 6);
   });
