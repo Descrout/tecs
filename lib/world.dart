@@ -1,11 +1,11 @@
 import 'package:tecs/archetype.dart';
 import 'package:tecs/bit_hash.dart';
 import 'package:tecs/query.dart';
+import 'package:tecs/system.dart';
 import 'package:tecs/tecs.dart';
 import 'package:tecs/types.dart';
 
 class World {
-  //TODO: systems
   //TODO: addComponent removeComponent graph cache ?
   //TODO: faster query method ?
 
@@ -16,6 +16,8 @@ class World {
   final _componentTypes = <Type, ComponentID>{};
 
   final _resources = <String, dynamic>{};
+
+  final _systems = <String, List<System>>{};
 
   int _componentCounter = 2;
   int _entityCounter = 0;
@@ -30,6 +32,7 @@ class World {
     _entityIndex.clear();
     _archetypeIndex.clear();
     _resources.clear();
+    _systems.clear();
     _componentCounter = 2;
     _entityCounter = 0;
   }
@@ -43,6 +46,21 @@ class World {
     final componentRow = archetypes?[archetype.bitHash];
     if (componentRow == null) return null;
     return archetype.components[componentRow][record.entityRow] as T?;
+  }
+
+  void addSystem(System system, {String tag = ""}) {
+    system.world = this;
+    system.tag = tag;
+    _systems[tag] ??= <System>[];
+    _systems[tag]!.add(system);
+  }
+
+  void update<T>(T args, {String tag = ""}) {
+    final systems = _systems[tag];
+    if (systems == null) return;
+    for (final system in systems) {
+      system.update(args);
+    }
   }
 
   T addResource<T>(T resource, {String tag = ""}) {
@@ -226,24 +244,4 @@ class World {
   }
 
   Query query(Iterable<Type> types) => Query(rows: queryRaw(types).map((e) => QueryRow(e)));
-
-  // Iterable<List<Component>> queryRawSorted(Iterable<Type> types) {
-  //   final unsortedbitHash = bitHash(types.map((e) => _getOrCreateComponentID(e)), true);
-  //   final bitHash = _getOrCreatebitHash(unsortedbitHash);
-  //   final queryRows = <List<Component>>[];
-  //   for (final kv in _archetypeIndex.entries) {
-  //     if (kv.value.isEmpty) continue;
-  //     final indices = kv.key.containIndices(bitHash);
-  //     if (indices.isNotEmpty) {
-  //       for (int i = 0; i < kv.value.entityCount; i++) {
-  //         final componentsOfEntity = <Component>[];
-  //         for (final componentIdx in indices) {
-  //           componentsOfEntity.add(kv.value.components[componentIdx][i]);
-  //         }
-  //         queryRows.add(componentsOfEntity);
-  //       }
-  //     }
-  //   }
-  //   return queryRows;
-  // }
 }

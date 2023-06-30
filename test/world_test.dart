@@ -1,6 +1,28 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tecs/component.dart';
+import 'package:tecs/system.dart';
 import 'package:tecs/world.dart';
+
+class FooSystem extends System<double> {
+  @override
+  void update(double deltaTime) {
+    final foo = world.getResource<Foo>()!;
+    foo.bar += 1;
+    final a = deltaTime * foo.bar;
+    debugPrint(a.toString());
+  }
+}
+
+class FooSystemRender extends System<double> {
+  @override
+  void update(double deltaTime) {
+    final foo = world.getResource<Foo>()!;
+    foo.bar += 2;
+    final a = deltaTime * foo.bar;
+    debugPrint(a.toString());
+  }
+}
 
 class Foo {
   int bar = 0;
@@ -264,5 +286,24 @@ void main() {
     expect(world.getResource<FooGeneric<double>>(), isNotNull);
     expect(world.getResource<FooGeneric<double>>().runtimeType, FooGeneric<double>);
     expect(world.getResource<FooGeneric<double>>()!.val, 3.14159);
+  });
+
+  test('systems', () {
+    final world = World();
+
+    final foo = Foo();
+
+    world.addResource(foo);
+    world.addSystem(FooSystem());
+    world.addSystem(FooSystemRender(), tag: "render");
+
+    world.update(0.016);
+    world.update(0.016);
+    world.update(0.016);
+    world.update(0.016);
+
+    world.update(0.016, tag: "render");
+
+    expect(foo.bar, 6);
   });
 }
