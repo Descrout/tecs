@@ -129,8 +129,8 @@ class World {
     Archetype fromArchetype,
     int entityRow,
     Archetype toArchetype, {
-    Component? toAdd,
-    ComponentID? toRemove,
+    List<Component> toAdd = const [],
+    Set<ComponentID> toRemove = const {},
   }) {
     bool recordsFixed = false;
     final removedComps = <Component>[];
@@ -143,11 +143,11 @@ class World {
         }
       }
       final removed = compsOfEntity.removeAt(entityRow);
-      if (toRemove == null || _componentTypes[removed.runtimeType] != toRemove) {
+      if (!toRemove.contains(_componentTypes[removed.runtimeType])) {
         removedComps.add(removed);
       }
     }
-    if (toAdd != null) removedComps.add(toAdd);
+    removedComps.addAll(toAdd);
     int newEntityRow = -1;
     for (final compToAdd in removedComps) {
       final componentID = _componentTypes[compToAdd.runtimeType]!;
@@ -193,7 +193,52 @@ class World {
         oldArchetype,
         record.entityRow,
         archetype,
-        toAdd: component,
+        toAdd: [component],
+      );
+    }
+  }
+
+  void addComponents(EntityID entityID, {required List<Component> components}) {
+    final componentIDs = <ComponentID>[];
+
+    for (final component in components) {
+      component.entityID = entityID;
+      final componentID = _getOrCreateComponentID(component.runtimeType);
+      componentIDs.add(componentID);
+      _componentIndex[componentID] ??= {};
+    }
+
+    final record = _entityIndex.remove(entityID);
+    if (record == null) {
+      final bitHash = BitHash.fromIterable(componentIDs);
+      final archetype = _getOrCreateArchetype(bitHash);
+
+      for (int i = 0; i < components.length; i++) {
+        final componentID = componentIDs.elementAt(i);
+        final component = components[i];
+
+        if (_componentIndex[componentID]![bitHash] == null) {
+          _componentIndex[componentID]![bitHash] = archetype.components.length;
+          archetype.components.add([]);
+        }
+        final componentsList = archetype.components[_componentIndex[componentID]![bitHash]!];
+        componentsList.add(component);
+      }
+
+      _entityIndex[entityID] = Record(
+        archetype: archetype,
+        entityRow: archetype.components[0].length - 1,
+      );
+    } else {
+      final oldArchetype = record.archetype;
+      final bitHash = oldArchetype.bitHash.copy()..addAll(componentIDs);
+      final archetype = _getOrCreateArchetype(bitHash);
+      _moveEntity(
+        entityID,
+        oldArchetype,
+        record.entityRow,
+        archetype,
+        toAdd: components,
       );
     }
   }
@@ -216,7 +261,29 @@ class World {
         oldArchetype,
         record.entityRow,
         archetype,
-        toRemove: componentID,
+        toRemove: {componentID},
+      );
+    }
+  }
+
+  void removeComponents(EntityID entityID, {required List<Type> components}) {
+    final record = _entityIndex[entityID];
+    if (record == null) return;
+
+    final componentIDs = components.map((e) => _getOrCreateComponentID(e)).toSet();
+    final oldArchetype = record.archetype;
+    final bitHash = oldArchetype.bitHash.copy();
+    if (!bitHash.removeAll(componentIDs)) return;
+    if (bitHash.value == 0) {
+      _removeEntityFromArchetype(entityID, oldArchetype, record.entityRow);
+    } else {
+      final archetype = _getOrCreateArchetype(bitHash);
+      _moveEntity(
+        entityID,
+        oldArchetype,
+        record.entityRow,
+        archetype,
+        toRemove: componentIDs,
       );
     }
   }

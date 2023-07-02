@@ -31,6 +31,22 @@ void main() {
     expect(x, y);
   });
 
+  test('addAll and removeAll', () {
+    final x = BitHash.fromIterable(<int>[2, 16, 8, 4, 32]);
+    final y = BitHash.fromIterable(<int>[16, 8, 2]);
+    expect(x, isNot(y));
+
+    x.removeAll([4, 32]);
+    expect(x, y);
+
+    y.addAll([32, 4]);
+    expect(x, isNot(y));
+
+    x.add(32);
+    x.addAll([4]);
+    expect(x, y);
+  });
+
   test('copy must be equal to itself', () {
     final x = BitHash.fromIterable(<int>[4, 2, 8]);
     final y = x.copy();

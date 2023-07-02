@@ -127,6 +127,30 @@ void main() {
     expect(color1!.r + color1.g + color1.b, 146);
   });
 
+  test('add components in bulk', () {
+    final world = World();
+
+    final entity1 = world.createEntity();
+    final entity2 = world.createEntity();
+
+    world.addComponent(entity1, PositionComponent(x: 3, y: 4));
+
+    world.addComponents(entity2, components: [
+      PositionComponent(x: 7, y: 8),
+      ColorComponent(r: 9, g: 12, b: 111),
+    ]);
+
+    final pos2 = world.getComponent<PositionComponent>(entity2);
+    final color2 = world.getComponent<ColorComponent>(entity2);
+    expect(pos2, isNotNull);
+    expect(color2, isNotNull);
+    expect(color2!.entityID, entity2);
+
+    expect(pos2!.y, 8);
+
+    expect(color2.r + color2.g + color2.b, 132);
+  });
+
   test('removing component', () {
     final world = World();
 
@@ -156,6 +180,30 @@ void main() {
     final name1 = world.getComponent<NameComponent>(entity1);
     expect(name1, isNotNull);
     expect(name1!.name, "ent1");
+  });
+
+  test('remove components in bulk', () {
+    final world = World();
+
+    final entity1 = world.createEntity();
+    final entity2 = world.createEntity();
+
+    world.addComponent(entity1, PositionComponent(x: 3, y: 4));
+
+    world.addComponent(entity2, PositionComponent(x: 3, y: 4));
+    world.addComponent(entity2, ColorComponent(r: 3, g: 4, b: 100));
+    world.addComponent(entity2, NameComponent(name: "ent2"));
+
+    world.removeComponents(entity2, components: [ColorComponent, NameComponent]);
+
+    final color2Null = world.getComponent<ColorComponent>(entity2);
+    expect(color2Null, isNull);
+
+    final name2Null = world.getComponent<NameComponent>(entity2);
+    expect(name2Null, isNull);
+
+    final pos2 = world.getComponent<PositionComponent>(entity2);
+    expect(pos2!.x, 3);
   });
 
   test('delete entity', () {
