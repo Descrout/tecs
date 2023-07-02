@@ -62,13 +62,27 @@ class VelocityComponent extends Component {
 world.addComponent(entity1, PositionComponent(x: 150, y: 150));
 world.addComponent(entity1, VelocityComponent(x: -800, y: 400));
 
+// Add components to an entity in bulk
+world.addComponents(entity1, components: [
+  PositionComponent(x: 150, y: 150),
+  VelocityComponent(x: -800, y: 400),
+]);
+```
+```dart
 // Get component of an entity (returns null if the entity does not have the component)
 final position = world.getComponent<PositionComponent>(entity1);
 final velocity = world.getComponent<VelocityComponent>(entity1);
-
+```
+```dart
 // Remove a component
 world.removeComponent<PositionComponent>(entity1);
 world.removeComponent<VelocityComponent>(entity1);
+
+// Remove components in bulk
+world.removeComponents(entity1, components: [
+  PositionComponent,
+  VelocityComponent,
+]);
 ```
 ## Queries
 ```dart
