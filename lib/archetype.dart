@@ -1,5 +1,5 @@
-import 'package:tecs/bit_hash.dart';
 import 'package:tecs/component.dart';
+import 'package:tecs/set_hash.dart';
 
 class Record {
   Record({
@@ -12,11 +12,11 @@ class Record {
 
 class Archetype {
   Archetype({
-    required this.bitHash,
+    required this.setHash,
     required this.components,
   });
 
-  final BitHash bitHash;
+  final SetHash setHash;
 
   // [componentIndex][entityIndex]
   final List<List<Component>> components;
