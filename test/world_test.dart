@@ -300,6 +300,33 @@ void main() {
     }
   });
 
+  test('query count', () {
+    final world = World();
+
+    final entity1 = world.createEntity();
+    final entity2 = world.createEntity();
+    final entity3 = world.createEntity();
+
+    world.addComponent(entity1, PositionComponent(x: 3, y: 4));
+
+    world.addComponent(entity2, PositionComponent(x: 3, y: 4));
+    world.addComponent(entity2, ColorComponent(r: 3, g: 4, b: 100));
+
+    world.addComponent(entity3, PositionComponent(x: 3, y: 4));
+    world.addComponent(entity3, ColorComponent(r: 3, g: 4, b: 100));
+
+    expect(world.queryCount([NameComponent]), 0);
+    expect(world.queryCount([PositionComponent]), 3);
+    expect(world.queryCount([ColorComponent]), 2);
+    expect(world.queryCount([PositionComponent, ColorComponent]), 2);
+
+    world.removeEntity(entity2);
+
+    expect(world.queryCount([PositionComponent]), 2);
+    expect(world.queryCount([ColorComponent]), 1);
+    expect(world.queryCount([PositionComponent, ColorComponent]), 1);
+  });
+
   test('resources', () {
     final world = World();
     world.addResource(Foo());
