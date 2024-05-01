@@ -13,7 +13,7 @@ class World {
 
   final _systems = <String, List<System>>{};
 
-  int _componentCounter = 2;
+  int _componentCounter = 0;
   int _entityCounter = 0;
 
   int get archetypeCount => _archetypeIndex.length;
@@ -27,7 +27,7 @@ class World {
     _archetypeIndex.clear();
     _resources.clear();
     _systems.clear();
-    _componentCounter = 2;
+    _componentCounter = 0;
     _entityCounter = 0;
   }
 
@@ -88,7 +88,7 @@ class World {
     final id = _componentTypes[type];
     if (id != null) return id;
     _componentTypes[type] = _componentCounter;
-    _componentCounter *= 2;
+    _componentCounter++;
     return _componentTypes[type]!;
   }
 
