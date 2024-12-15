@@ -305,7 +305,6 @@ class World {
         final component = components[i];
         component.entityID = entityID;
 
-        // Add component to the appropriate archetype slot
         _componentIndex[componentIDs[i]] ??= {};
         if (_componentIndex[componentIDs[i]]![hash] == null) {
           _componentIndex[componentIDs[i]]![hash] = archetype.components.length;
@@ -329,16 +328,14 @@ class World {
     final hash = SetHash(ids);
     final queryRows = <List<Component>>[];
     for (final kv in _archetypeIndex.entries) {
-      if (kv.value.isEmpty) continue;
-      if (kv.key.contains(hash)) {
-        for (int i = 0; i < kv.value.entityCount; i++) {
-          final componentsOfEntity = <Component>[];
-          for (final componentID in ids) {
-            componentsOfEntity
-                .add(kv.value.components[_componentIndex[componentID]![kv.value.setHash]!][i]);
-          }
-          queryRows.add(componentsOfEntity);
+      if (kv.value.isEmpty || !kv.key.contains(hash)) continue;
+      for (int i = 0; i < kv.value.entityCount; i++) {
+        final componentsOfEntity = <Component>[];
+        for (final componentID in ids) {
+          componentsOfEntity
+              .add(kv.value.components[_componentIndex[componentID]![kv.value.setHash]!][i]);
         }
+        queryRows.add(componentsOfEntity);
       }
     }
     return queryRows;
@@ -349,10 +346,8 @@ class World {
     final hash = SetHash(ids);
     int queryCount = 0;
     for (final kv in _archetypeIndex.entries) {
-      if (kv.value.isEmpty) continue;
-      if (kv.key.contains(hash)) {
-        queryCount += kv.value.entityCount;
-      }
+      if (kv.value.isEmpty || !kv.key.contains(hash)) continue;
+      queryCount += kv.value.entityCount;
     }
     return queryCount;
   }
