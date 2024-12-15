@@ -288,6 +288,42 @@ class World {
     }
   }
 
+  List<EntityID> createEntities(List<List<Component>> entitiesComponents) {
+    final newEntities = <EntityID>[];
+
+    for (final components in entitiesComponents) {
+      final entityID = createEntity();
+      newEntities.add(entityID);
+
+      final componentIDs =
+          components.map((component) => _getOrCreateComponentID(component.runtimeType)).toList();
+
+      final hash = SetHash(componentIDs);
+      final archetype = _getOrCreateArchetype(hash);
+
+      for (int i = 0; i < components.length; i++) {
+        final component = components[i];
+        component.entityID = entityID;
+
+        // Add component to the appropriate archetype slot
+        _componentIndex[componentIDs[i]] ??= {};
+        if (_componentIndex[componentIDs[i]]![hash] == null) {
+          _componentIndex[componentIDs[i]]![hash] = archetype.components.length;
+          archetype.components.add([]);
+        }
+        final componentsList = archetype.components[_componentIndex[componentIDs[i]]![hash]!];
+        componentsList.add(component);
+      }
+
+      _entityIndex[entityID] = Record(
+        archetype: archetype,
+        entityRow: archetype.components[0].length - 1,
+      );
+    }
+
+    return newEntities;
+  }
+
   Iterable<List<Component>> queryRaw(Iterable<Type> types) {
     final ids = types.map((e) => _getOrCreateComponentID(e));
     final hash = SetHash(ids);

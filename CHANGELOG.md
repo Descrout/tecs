@@ -1,3 +1,7 @@
+## 1.0.3
+
+* Ability to create entities with multiple components, in bulk.
+
 ## 1.0.2
 
 * BitHash to SetHash so you can have more than 32 components.

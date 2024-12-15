@@ -131,10 +131,22 @@ void main() {
     final world = World();
 
     final entity1 = world.createEntity();
-    final entity2 = world.createEntity();
-
     world.addComponent(entity1, PositionComponent(x: 3, y: 4));
+    world.addComponents(entity1, components: [
+      NameComponent(name: "ent1"),
+      ColorComponent(r: 9, g: 12, b: 111),
+    ]);
+    final pos1 = world.getComponent<PositionComponent>(entity1);
+    final color1 = world.getComponent<ColorComponent>(entity1);
+    final name1 = world.getComponent<NameComponent>(entity1);
+    expect(pos1, isNotNull);
+    expect(pos1!.x, 3);
 
+    expect(color1, isNotNull);
+    expect(name1, isNotNull);
+    expect(name1!.name, "ent1");
+
+    final entity2 = world.createEntity();
     world.addComponents(entity2, components: [
       PositionComponent(x: 7, y: 8),
       ColorComponent(r: 9, g: 12, b: 111),
@@ -379,5 +391,50 @@ void main() {
     world.update((number: 3, message: "Hello World"), tag: "bar");
 
     expect(foo.bar, 6);
+  });
+
+  test('create entities in bulk', () {
+    final world = World();
+
+    final bulkComponents = [
+      [PositionComponent(x: 10.0, y: 20.0), ColorComponent(r: 255, g: 0, b: 0)], //for entity1
+      [PositionComponent(x: 30.0, y: 40.0)], //for entity2
+      [PositionComponent(x: 50.0, y: 60.0), ColorComponent(r: 0, g: 0, b: 255)], //for entity3
+    ];
+
+    final entityIDs = world.createEntities(bulkComponents);
+
+    expect(entityIDs.length, 3, reason: "Should create 3 entities");
+    expect(world.entityCount, 3, reason: "World should have 3 entities");
+
+    for (int i = 0; i < entityIDs.length; i++) {
+      final entityID = entityIDs[i];
+
+      final position = world.getComponent<PositionComponent>(entityID);
+      expect(position, isNotNull, reason: "Entity $entityID should have a PositionComponent");
+      expect(position!.x, (bulkComponents[i][0] as PositionComponent).x,
+          reason: "PositionComponent.x should match input");
+      expect(position.y, (bulkComponents[i][0] as PositionComponent).y,
+          reason: "PositionComponent.y should match input");
+
+      final color = world.getComponent<ColorComponent>(entityID);
+      if (i == 1) {
+        expect(color, isNull, reason: "Entity $entityID should not have a ColorComponent");
+      } else {
+        expect(color, isNotNull, reason: "Entity $entityID should have a ColorComponent");
+        expect(color!.r, (bulkComponents[i][1] as ColorComponent).r,
+            reason: "ColorComponent.r should match input");
+        expect(color.g, (bulkComponents[i][1] as ColorComponent).g,
+            reason: "ColorComponent.g should match input");
+        expect(color.b, (bulkComponents[i][1] as ColorComponent).b,
+            reason: "ColorComponent.b should match input");
+      }
+    }
+
+    world.addComponent(entityIDs[1], ColorComponent(r: 0, g: 255, b: 0));
+    final color = world.getComponent<ColorComponent>(entityIDs[1]);
+    expect(color, isNotNull);
+    expect(color!.r, 0);
+    expect(color.g, 255);
   });
 }

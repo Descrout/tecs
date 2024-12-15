@@ -34,6 +34,15 @@ if(entity1Status) {
   print("entity1 is dead");
 }
 ```
+```dart
+// Create entities in bulk
+final entityIDs = world.createEntities([
+	[NameComponent(name: "Entity1"), PositionComponent(x:  10.0, y:  20.0)],
+	[NameComponent(name: "Entity2"), PositionComponent(x:  30.0, y:  40.0)],
+	[NameComponent(name: "Entity3"), PositionComponent(x:  50.0, y:  60.0)],
+]);
+print(entityIDs.length); // 3
+```
 ## Components
 ```dart
 class PositionComponent extends Component {
