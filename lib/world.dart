@@ -20,15 +20,22 @@ class World {
   int get entityCount => _entityIndex.length;
   int get componentTypesCount => _componentTypes.length;
 
-  void clear() {
+  void clearEntities() {
     _componentTypes.clear();
     _componentIndex.clear();
     _entityIndex.clear();
     _archetypeIndex.clear();
-    _resources.clear();
-    _systems.clear();
     _componentCounter = 0;
     _entityCounter = 0;
+  }
+
+  void clearResources() => _resources.clear();
+  void clearSystems() => _systems.clear();
+
+  void clear() {
+    clearSystems();
+    clearEntities();
+    clearResources();
   }
 
   T? getComponent<T extends Component>(EntityID entityID) {
@@ -58,15 +65,15 @@ class World {
   }
 
   T addResource<T>(T resource, {String tag = ""}) {
-    return _resources[T.toString() + tag] = resource;
+    return _resources["$T|$tag"] = resource;
   }
 
   T? getResource<T>({String tag = ""}) {
-    return _resources[T.toString() + tag] as T?;
+    return _resources["$T|$tag"] as T?;
   }
 
   T? removeResource<T>({String tag = ""}) {
-    return _resources.remove(T.toString() + tag) as T?;
+    return _resources.remove("$T|$tag") as T?;
   }
 
   EntityID createEntity() {
