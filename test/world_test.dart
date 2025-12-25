@@ -261,7 +261,8 @@ void main() {
     world.addComponent(entity3, ColorComponent(r: 3, g: 4, b: 100));
     world.addComponent(entity3, PositionComponent(x: 3, y: 4));
 
-    final queryResult1 = world.queryRaw([ColorComponent, PositionComponent]);
+    final params = world.newParams([ColorComponent, PositionComponent]);
+    final queryResult1 = world.queryRaw(params);
     expect(queryResult1.length, 2);
     for (final components in queryResult1) {
       expect(components.length, 2);
@@ -270,14 +271,14 @@ void main() {
       expect((components[0] as ColorComponent).b, 100);
     }
 
-    final queryResult2 = world.queryRaw([PositionComponent]);
+    final queryResult2 = world.queryRaw(world.newParams([PositionComponent]));
     expect(queryResult2.length, 3);
     for (final components in queryResult2) {
       expect(components.length, 1);
       expect(components[0].runtimeType, PositionComponent);
     }
 
-    final queryResult3 = world.queryRaw([NameComponent]);
+    final queryResult3 = world.queryRaw(world.newParams([NameComponent]));
     expect(queryResult3.length, 1);
     for (final components in queryResult3) {
       expect(components.length, 1);
@@ -299,14 +300,14 @@ void main() {
     world.addComponent(entity2, ColorComponent(r: 3, g: 4, b: 100));
     world.addComponent(entity2, PositionComponent(x: 3, y: 4));
 
-    final queryResult1 = world.query([ColorComponent, PositionComponent]);
-    for (final row in queryResult1.rows) {
+    final resultRows1 = world.query([ColorComponent, PositionComponent]);
+    for (final row in resultRows1) {
       expect(row.get<PositionComponent>().x, 3);
       expect(row.get<ColorComponent>().b, 100);
     }
 
-    final queryResult2 = world.query([NameComponent]);
-    for (final row in queryResult2.rows) {
+    final resultRows2 = world.queryWithParams(world.newParams([NameComponent]));
+    for (final row in resultRows2) {
       expect(row.get<NameComponent>().name, "ent1");
       expect(row.entity, entity1);
     }
@@ -328,8 +329,8 @@ void main() {
     world.addComponent(entity3, ColorComponent(r: 3, g: 4, b: 100));
 
     expect(world.queryCount([NameComponent]), 0);
-    expect(world.queryCount([PositionComponent]), 3);
-    expect(world.queryCount([ColorComponent]), 2);
+    expect(world.queryCountWithParams(world.newParams([PositionComponent])), 3);
+    expect(world.queryCountWithParams(world.newParams([ColorComponent])), 2);
     expect(world.queryCount([PositionComponent, ColorComponent]), 2);
 
     world.removeEntity(entity2);

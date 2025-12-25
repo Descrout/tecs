@@ -302,8 +302,9 @@ class World {
       final entityID = createEntity();
       newEntities.add(entityID);
 
-      final componentIDs =
-          components.map((component) => _getOrCreateComponentID(component.runtimeType)).toList();
+      final componentIDs = components
+          .map((component) => _getOrCreateComponentID(component.runtimeType))
+          .toList(growable: false);
 
       final hash = SetHash(componentIDs);
       final archetype = _getOrCreateArchetype(hash);
@@ -330,15 +331,13 @@ class World {
     return newEntities;
   }
 
-  Iterable<List<Component>> queryRaw(Iterable<Type> types) {
-    final ids = types.map((e) => _getOrCreateComponentID(e));
-    final hash = SetHash(ids);
+  List<List<Component>> queryRaw(QueryParams params) {
     final queryRows = <List<Component>>[];
     for (final kv in _archetypeIndex.entries) {
-      if (kv.value.isEmpty || !kv.key.contains(hash)) continue;
+      if (kv.value.isEmpty || !kv.key.contains(params.hash)) continue;
       for (int i = 0; i < kv.value.entityCount; i++) {
         final componentsOfEntity = <Component>[];
-        for (final componentID in ids) {
+        for (final componentID in params.ids) {
           componentsOfEntity
               .add(kv.value.components[_componentIndex[componentID]![kv.value.setHash]!][i]);
         }
@@ -348,16 +347,20 @@ class World {
     return queryRows;
   }
 
-  int queryCount(Iterable<Type> types) {
-    final ids = types.map((e) => _getOrCreateComponentID(e));
-    final hash = SetHash(ids);
+  QueryParams newParams(Iterable<Type> types) =>
+      QueryParams(types.map((e) => _getOrCreateComponentID(e)));
+
+  int queryCount(Iterable<Type> types) => queryCountWithParams(newParams(types));
+  int queryCountWithParams(QueryParams params) {
     int queryCount = 0;
     for (final kv in _archetypeIndex.entries) {
-      if (kv.value.isEmpty || !kv.key.contains(hash)) continue;
+      if (kv.value.isEmpty || !kv.key.contains(params.hash)) continue;
       queryCount += kv.value.entityCount;
     }
     return queryCount;
   }
 
-  Query query(Iterable<Type> types) => Query(rows: queryRaw(types).map((e) => QueryRow(e)));
+  List<QueryRow> query(Iterable<Type> types) => queryWithParams(newParams(types));
+  List<QueryRow> queryWithParams(QueryParams params) =>
+      queryRaw(params).map((e) => QueryRow(e)).toList(growable: false);
 }
