@@ -1,4 +1,3 @@
-// ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'package:tecs/component.dart';
 import 'package:tecs/set_hash.dart';
 import 'package:tecs/types.dart';
@@ -14,16 +13,35 @@ class QueryRow {
   T get<T extends Component>() => _components[T]! as T;
 }
 
-// class Query {
-//   Query({required this.rows});
-//   final Iterable<QueryRow> rows;
-// }
-
 class QueryParams {
-  final SetHash hash;
-  final Iterable<int> ids;
+  final List<Type> _components;
+
+  SetHash? _hash;
+  final List<int> _ids = [];
 
   QueryParams(
-    this.ids,
-  ) : hash = SetHash(ids);
+    this._components,
+  );
+
+  SetHash get hash => _hash!;
+  List<int> get ids => _ids;
+
+  bool get isActivated => _hash != null;
+
+  bool activate(Map<Type, int> types) {
+    if (isActivated) return true;
+
+    for (final t in _components) {
+      final id = types[t];
+      if (id == null) {
+        _ids.clear();
+        return false;
+      }
+      _ids.add(id);
+    }
+
+    _hash = SetHash(_ids);
+
+    return true;
+  }
 }

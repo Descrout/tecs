@@ -38,6 +38,22 @@ class World {
     clearResources();
   }
 
+  ComponentID? componentID<T extends Component>() {
+    return _componentTypes[T];
+  }
+
+  int componentColumn(ComponentID id, SetHash hash) {
+    return _componentIndex[id]![hash]!;
+  }
+
+  Iterable<Archetype> archetypesWith(SetHash hash) sync* {
+    for (final archetype in _archetypeIndex.values) {
+      if (!archetype.isEmpty && archetype.setHash.contains(hash)) {
+        yield archetype;
+      }
+    }
+  }
+
   T? getComponent<T extends Component>(EntityID entityID) {
     final componentID = _componentTypes[T];
     final record = _entityIndex[entityID];
@@ -54,6 +70,7 @@ class World {
     system.tag = tag;
     _systems[tag] ??= <System>[];
     _systems[tag]!.add(system);
+    system.init();
   }
 
   void update<T>(T args, {String tag = ""}) {
@@ -254,7 +271,8 @@ class World {
     final record = _entityIndex[entityID];
     if (record == null) return;
 
-    final componentID = _getOrCreateComponentID(T);
+    final componentID = _componentTypes[T];
+    if (componentID == null) return;
     final oldArchetype = record.archetype;
     final setHash = oldArchetype.setHash.copy();
     if (!setHash.remove(componentID)) return;
@@ -277,7 +295,17 @@ class World {
     final record = _entityIndex[entityID];
     if (record == null) return;
 
-    final componentIDs = components.map((e) => _getOrCreateComponentID(e)).toSet();
+    final componentIDs = <ComponentID>{};
+
+    for (final type in components) {
+      final id = _componentTypes[type];
+      if (id != null) {
+        componentIDs.add(id);
+      }
+    }
+
+    if (componentIDs.isEmpty) return;
+
     final oldArchetype = record.archetype;
     final setHash = oldArchetype.setHash.copy();
     if (!setHash.removeAll(componentIDs)) return;
@@ -333,6 +361,7 @@ class World {
 
   List<List<Component>> queryRaw(QueryParams params) {
     final queryRows = <List<Component>>[];
+    if (!params.activate(_componentTypes)) return queryRows;
     for (final kv in _archetypeIndex.entries) {
       if (kv.value.isEmpty || !kv.key.contains(params.hash)) continue;
       for (int i = 0; i < kv.value.entityCount; i++) {
@@ -347,11 +376,9 @@ class World {
     return queryRows;
   }
 
-  QueryParams newParams(Iterable<Type> types) =>
-      QueryParams(types.map((e) => _getOrCreateComponentID(e)));
-
-  int queryCount(Iterable<Type> types) => queryCountWithParams(newParams(types));
+  int queryCount(List<Type> types) => queryCountWithParams(QueryParams(types));
   int queryCountWithParams(QueryParams params) {
+    if (!params.activate(_componentTypes)) return 0;
     int queryCount = 0;
     for (final kv in _archetypeIndex.entries) {
       if (kv.value.isEmpty || !kv.key.contains(params.hash)) continue;
@@ -360,7 +387,8 @@ class World {
     return queryCount;
   }
 
-  List<QueryRow> query(Iterable<Type> types) => queryWithParams(newParams(types));
-  List<QueryRow> queryWithParams(QueryParams params) =>
-      queryRaw(params).map((e) => QueryRow(e)).toList(growable: false);
+  List<QueryRow> query(List<Type> types) => queryWithParams(QueryParams(types));
+  List<QueryRow> queryWithParams(QueryParams params) {
+    return queryRaw(params).map((e) => QueryRow(e)).toList(growable: false);
+  }
 }

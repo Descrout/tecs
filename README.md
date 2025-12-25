@@ -97,13 +97,52 @@ world.removeComponents(entity1, components: [
 ```dart
 final queryResult = world.query([PositionComponent, VelocityComponent]);
 
-for (final row in queryResult.rows) {
+for (final row in queryResult) {
     final position = row.get<PositionComponent>();
     final velocity = row.get<VelocityComponent>();
 
     position.x += velocity.x;
     position.y += velocity.y;
 }
+```
+```dart
+// You can also create the params beforehand.
+// This might increase the performance slightly. 
+final params = QueryParams([PositionComponent, VelocityComponent]); // Call this once and cache the params
+final queryResult = world.queryWithParams(params); // Call this in update with saved params
+
+for (final row in queryResult) {
+    final position = row.get<PositionComponent>();
+    final velocity = row.get<VelocityComponent>();
+
+    position.x += velocity.x;
+    position.y += velocity.y;
+}
+```
+## Resources
+```dart
+class GameTime {
+    double seconds = 0;
+}
+
+// Add Resource
+world.addResource(GameTime());
+
+// Get Resource and Manipulate
+final gameTime = world.getResource<GameTime>();
+gameTime.seconds += 1;
+
+// If you add same resource, it will replace the old one
+world.addResource(GameTime()); // replace the old GameTime
+
+// You can give tags to add the same resource type without replacing
+world.addResource(GameTime(), tag: "menu");
+final gameTime = world.getResource<GameTime>();
+final gameTimeMenu = world.getResource<GameTime>(tag: "menu");
+
+// Remove resource
+world.removeResource<GameTime>(); // returns GameTime if the resource exists, null otherwise
+world.removeResource<GameTime>(tag: "menu");
 ```
 ## Systems
 ```dart
@@ -114,12 +153,40 @@ class MoveSystem extends System<double> {
     // has access to the world
     final queryResult = world.query([PositionComponent, VelocityComponent]);
 
-    for (final row in queryResult.rows) {
+    for (final row in queryResult) {
         final position = row.get<PositionComponent>();
         final velocity = row.get<VelocityComponent>();
 
         position.x += velocity.x * deltaTime;
         position.y += velocity.y * deltaTime;
+    }
+  }
+}
+```
+```dart
+// You can also override the init function and cache the params beforehand
+class MoveSystem extends System<double> {
+  final params = QueryParams([PositionComponent, VelocityComponent]);
+  late final Inputs inputs;
+
+  // Will be called once. (When this system is added to the world)
+  @override
+  void init() {
+    inputs = world.getResource<Inputs>()!;
+  }
+
+  @override
+  void update(double deltaTime) {
+    final queryResult = world.queryWithParams(params);
+
+    for (final row in queryResult) {
+        final position = row.get<PositionComponent>();
+        final velocity = row.get<VelocityComponent>();
+
+        position.x += velocity.x * deltaTime;
+        position.y += velocity.y * deltaTime;
+
+        // use inputs.mouse.X etc
     }
   }
 }
@@ -145,7 +212,7 @@ class RenderSystem extends System<({Canvas canvas, Size size})> {
   void update(args) {
     final queryResult = world.query([RectComponent, ColorComponent]);
 
-    for (final row in queryResult.rows) {
+    for (final row in queryResult) {
         final rect = row.get<RectComponent>();
         final color = row.get<ColorComponent>();
 
@@ -174,29 +241,4 @@ world.update(deltaTime); // MoveSystem and CollisionSystem will run
 // A render loop that provides canvas and size
 world.update(canvas, size, tag: "render"); // RenderSystem and RenderCollidersDebug will run
 // A render loop that provides canvas and size
-```
-## Resources
-```dart
-class GameTime {
-    double seconds = 0;
-}
-
-// Add Resource
-world.addResource(GameTime());
-
-// Get Resource and Manipulate
-final gameTime = world.getResource<GameTime>();
-gameTime.seconds += 1;
-
-// If you add same resource, it will replace the old one
-world.addResource(GameTime()); // replace the old GameTime
-
-// You can give tags to add the same resource type without replacing
-world.addResource(GameTime(), tag: "menu");
-final gameTime = world.getResource<GameTime>();
-final gameTimeMenu = world.getResource<GameTime>(tag: "menu");
-
-// Remove resource
-world.removeResource<GameTime>(); // returns GameTime if the resource exists, null otherwise
-world.removeResource<GameTime>(tag: "menu");
 ```

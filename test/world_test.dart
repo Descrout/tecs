@@ -261,7 +261,7 @@ void main() {
     world.addComponent(entity3, ColorComponent(r: 3, g: 4, b: 100));
     world.addComponent(entity3, PositionComponent(x: 3, y: 4));
 
-    final params = world.newParams([ColorComponent, PositionComponent]);
+    final params = QueryParams([ColorComponent, PositionComponent]);
     final queryResult1 = world.queryRaw(params);
     expect(queryResult1.length, 2);
     for (final components in queryResult1) {
@@ -271,14 +271,14 @@ void main() {
       expect((components[0] as ColorComponent).b, 100);
     }
 
-    final queryResult2 = world.queryRaw(world.newParams([PositionComponent]));
+    final queryResult2 = world.queryRaw(QueryParams([PositionComponent]));
     expect(queryResult2.length, 3);
     for (final components in queryResult2) {
       expect(components.length, 1);
       expect(components[0].runtimeType, PositionComponent);
     }
 
-    final queryResult3 = world.queryRaw(world.newParams([NameComponent]));
+    final queryResult3 = world.queryRaw(QueryParams([NameComponent]));
     expect(queryResult3.length, 1);
     for (final components in queryResult3) {
       expect(components.length, 1);
@@ -306,7 +306,7 @@ void main() {
       expect(row.get<ColorComponent>().b, 100);
     }
 
-    final resultRows2 = world.queryWithParams(world.newParams([NameComponent]));
+    final resultRows2 = world.queryWithParams(QueryParams([NameComponent]));
     for (final row in resultRows2) {
       expect(row.get<NameComponent>().name, "ent1");
       expect(row.entity, entity1);
@@ -329,8 +329,8 @@ void main() {
     world.addComponent(entity3, ColorComponent(r: 3, g: 4, b: 100));
 
     expect(world.queryCount([NameComponent]), 0);
-    expect(world.queryCountWithParams(world.newParams([PositionComponent])), 3);
-    expect(world.queryCountWithParams(world.newParams([ColorComponent])), 2);
+    expect(world.queryCountWithParams(QueryParams([PositionComponent])), 3);
+    expect(world.queryCountWithParams(QueryParams([ColorComponent])), 2);
     expect(world.queryCount([PositionComponent, ColorComponent]), 2);
 
     world.removeEntity(entity2);
