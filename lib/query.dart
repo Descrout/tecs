@@ -27,8 +27,8 @@ class QueryParams {
   QueryParams(this.types);
 
   bool activate(World world) {
-    if (_resolvedWorldVersion == world.version) {
-      return _setHash != null;
+    if (_resolvedWorldVersion == world.version && _setHash != null) {
+      return true;
     }
 
     final ids = <int>[];
@@ -37,7 +37,6 @@ class QueryParams {
       if (id == null) {
         _setHash = null;
         _componentIDs = null;
-        _resolvedWorldVersion = -1;
         return false;
       }
       ids.add(id);
