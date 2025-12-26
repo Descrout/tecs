@@ -1,3 +1,7 @@
+## 1.0.8
+
+* Big performance boost !
+
 ## 1.0.7
 
 * ``clearEntities`` function now invalidates ``QueryParams`` with world versioning. (** BUG FIX **)

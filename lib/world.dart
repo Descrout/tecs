@@ -53,12 +53,14 @@ class World {
     return _componentIndex[id]![hash]!;
   }
 
-  Iterable<Archetype> archetypesWith(SetHash hash) sync* {
+  List<Archetype> findMatchingArchetypes(SetHash hash) {
+    final result = <Archetype>[];
     for (final archetype in _archetypeIndex.values) {
       if (!archetype.isEmpty && archetype.setHash.contains(hash)) {
-        yield archetype;
+        result.add(archetype);
       }
     }
+    return result;
   }
 
   T? getComponent<T extends Component>(EntityID entityID) {
@@ -366,18 +368,22 @@ class World {
     return newEntities;
   }
 
-  List<List<Component>> queryRaw(QueryParams params) {
-    final queryRows = <List<Component>>[];
+  List<Component> queryRaw(QueryParams params) {
+    final queryRows = <Component>[];
     if (!params.activate(this)) return queryRows;
-    for (final kv in _archetypeIndex.entries) {
-      if (kv.value.isEmpty || !kv.key.contains(params.hash)) continue;
-      for (int i = 0; i < kv.value.entityCount; i++) {
-        final componentsOfEntity = <Component>[];
-        for (final componentID in params.componentIDs) {
-          componentsOfEntity
-              .add(kv.value.components[_componentIndex[componentID]![kv.value.setHash]!][i]);
+
+    final columns = List<int>.filled(params.componentIDs.length, 0);
+
+    for (final archetype in _archetypeIndex.values) {
+      if (!archetype.setHash.contains(params.hash)) continue;
+      for (int c = 0; c < params.componentIDs.length; c++) {
+        columns[c] = _componentIndex[params.componentIDs[c]]![archetype.setHash]!;
+      }
+
+      for (int i = 0; i < archetype.entityCount; i++) {
+        for (int c = 0; c < columns.length; c++) {
+          queryRows.add(archetype.components[columns[c]][i]);
         }
-        queryRows.add(componentsOfEntity);
       }
     }
     return queryRows;
@@ -396,6 +402,15 @@ class World {
 
   List<QueryRow> query(List<Type> types) => queryWithParams(QueryParams(types));
   List<QueryRow> queryWithParams(QueryParams params) {
-    return queryRaw(params).map((e) => QueryRow(e)).toList(growable: false);
+    final result = <QueryRow>[];
+    final queryResults = queryRaw(params);
+    if (queryResults.isEmpty) return result;
+    final len = params.componentIDs.length;
+    if (len == 0) return result;
+    final rowCount = queryResults.length ~/ len;
+    for (int i = 0; i < rowCount; i++) {
+      result.add(QueryRow(queryResults, i * len, params.typeIndices));
+    }
+    return result;
   }
 }

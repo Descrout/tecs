@@ -94,6 +94,7 @@ world.removeComponents(entity1, components: [
 ]);
 ```
 ## Queries
+#### Simple query (one-off usage)
 ```dart
 final queryResult = world.query([PositionComponent, VelocityComponent]);
 
@@ -105,18 +106,25 @@ for (final row in queryResult) {
     position.y += velocity.y;
 }
 ```
+#### Optimized query with cached parameters (recommended for systems)
 ```dart
-// You can also create the params beforehand.
-// This might increase the performance slightly. 
-final params = QueryParams([PositionComponent, VelocityComponent]); // Call this once and cache the params
-final queryResult = world.queryWithParams(params); // Call this in update with saved params
+// Create query parameters once and cache them.
+// This should be done during system initialization.
+final params = QueryParams([
+  PositionComponent,
+  VelocityComponent,
+]);
 
-for (final row in queryResult) {
+for (int i = 0; i < 1000; i++) { // e.g. inside an update() loop
+  final queryResult = world.queryWithParams(params);
+
+  for (final row in queryResult) {
     final position = row.get<PositionComponent>();
     final velocity = row.get<VelocityComponent>();
 
     position.x += velocity.x;
     position.y += velocity.y;
+  }
 }
 ```
 ## Resources
