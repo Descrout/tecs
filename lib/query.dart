@@ -37,6 +37,7 @@ class QueryParams {
       if (id == null) {
         _setHash = null;
         _componentIDs = null;
+        _resolvedWorldVersion = -1;
         return false;
       }
       ids.add(id);
