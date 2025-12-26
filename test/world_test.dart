@@ -438,4 +438,113 @@ void main() {
     expect(color!.r, 0);
     expect(color.g, 255);
   });
+
+  test('query params must re-resolve after clearEntities', () {
+    final world = World();
+
+    final params = QueryParams([PositionComponent]);
+
+    final e1 = world.createEntity();
+    world.addComponent(e1, PositionComponent(x: 1, y: 2));
+
+    expect(world.queryWithParams(params).length, 1);
+
+    world.clearEntities();
+
+    final e2 = world.createEntity();
+    world.addComponent(e2, PositionComponent(x: 5, y: 6));
+
+    final result = world.queryWithParams(params);
+    expect(result.length, 1);
+    expect(result.first.entity, e2);
+  });
+
+  test('query params should activate when missing component is added later', () {
+    final world = World();
+
+    final params = QueryParams([PositionComponent, ColorComponent]);
+
+    final e1 = world.createEntity();
+    world.addComponent(e1, PositionComponent(x: 1, y: 2));
+
+    // resolve fail
+    expect(world.queryWithParams(params), isEmpty);
+
+    // now add missing component
+    world.addComponent(e1, ColorComponent(r: 1, g: 2, b: 3));
+
+    final result = world.queryWithParams(params);
+    expect(result.length, 1);
+    expect(result.first.get<ColorComponent>().b, 3);
+  });
+
+  test('query params reuse should be deterministic', () {
+    final world = World();
+    final params = QueryParams([PositionComponent]);
+
+    for (int i = 0; i < 10; i++) {
+      final e = world.createEntity();
+      world.addComponent(e, PositionComponent(x: i.toDouble(), y: i.toDouble()));
+    }
+
+    final r1 = world.queryWithParams(params);
+    final r2 = world.queryWithParams(params);
+
+    expect(r1.length, r2.length);
+
+    for (int i = 0; i < r1.length; i++) {
+      expect(r1[i].entity, r2[i].entity);
+      expect(r1[i].get<PositionComponent>().x, r2[i].get<PositionComponent>().x);
+    }
+  });
+
+  test('entity row indices must remain valid after removals', () {
+    final world = World();
+
+    final e1 = world.createEntity();
+    final e2 = world.createEntity();
+    final e3 = world.createEntity();
+
+    world.addComponent(e1, PositionComponent(x: 1, y: 1));
+    world.addComponent(e2, PositionComponent(x: 2, y: 2));
+    world.addComponent(e3, PositionComponent(x: 3, y: 3));
+
+    world.removeEntity(e2);
+
+    final p1 = world.getComponent<PositionComponent>(e1);
+    final p3 = world.getComponent<PositionComponent>(e3);
+
+    expect(p1!.x, 1);
+    expect(p3!.x, 3);
+  });
+
+  test('remove then re-add component should not corrupt archetypes', () {
+    final world = World();
+
+    final e = world.createEntity();
+    world.addComponent(e, PositionComponent(x: 1, y: 2));
+    world.addComponent(e, ColorComponent(r: 1, g: 1, b: 1));
+
+    world.removeComponent<ColorComponent>(e);
+    expect(world.getComponent<ColorComponent>(e), isNull);
+
+    world.addComponent(e, ColorComponent(r: 5, g: 6, b: 7));
+
+    final row = world.query([PositionComponent, ColorComponent]).single;
+    expect(row.get<ColorComponent>().b, 7);
+  });
+
+  test('component entityID must always match owner entity', () {
+    final world = World();
+
+    final e = world.createEntity();
+    world.addComponent(e, PositionComponent(x: 1, y: 1));
+    world.addComponent(e, ColorComponent(r: 1, g: 1, b: 1));
+
+    final rows = world.query([PositionComponent, ColorComponent]);
+    for (final row in rows) {
+      expect(row.get<PositionComponent>().entityID, row.entity);
+      expect(row.get<ColorComponent>().entityID, row.entity);
+    }
+  });
 }
