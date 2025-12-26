@@ -1,6 +1,7 @@
 import 'package:tecs/component.dart';
 import 'package:tecs/set_hash.dart';
 import 'package:tecs/types.dart';
+import 'package:tecs/world.dart';
 
 class QueryRow {
   final Map<Type, Component> _components;
@@ -14,34 +15,37 @@ class QueryRow {
 }
 
 class QueryParams {
-  final List<Type> _components;
+  final List<Type> types;
 
-  SetHash? _hash;
-  final List<int> _ids = [];
+  SetHash? _setHash;
+  List<int>? _componentIDs;
+  int _resolvedWorldVersion = -1;
 
-  QueryParams(
-    this._components,
-  );
+  SetHash get hash => _setHash!;
+  List<int> get componentIDs => _componentIDs!;
 
-  SetHash get hash => _hash!;
-  List<int> get ids => _ids;
+  QueryParams(this.types);
 
-  bool get isActivated => _hash != null;
-
-  bool activate(Map<Type, int> types) {
-    if (isActivated) return true;
-
-    for (final t in _components) {
-      final id = types[t];
-      if (id == null) {
-        _ids.clear();
-        return false;
-      }
-      _ids.add(id);
+  bool activate(World world) {
+    if (_resolvedWorldVersion == world.version) {
+      return _setHash != null;
     }
 
-    _hash = SetHash(_ids);
+    final ids = <int>[];
+    for (final t in types) {
+      final id = world.getComponentID(t);
+      if (id == null) {
+        _setHash = null;
+        _componentIDs = null;
+        _resolvedWorldVersion = -1;
+        return false;
+      }
+      ids.add(id);
+    }
 
+    _componentIDs = ids;
+    _setHash = SetHash(ids);
+    _resolvedWorldVersion = world.version;
     return true;
   }
 }

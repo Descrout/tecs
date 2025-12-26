@@ -1,3 +1,7 @@
+## 1.0.5
+
+* ``clearEntities`` function now invalidates ``QueryParams`` with world versioning. (** BUG FIX **)
+
 ## 1.0.4
 
 * Querying will return the list of rows directly instead of capsulating them in a class.

@@ -15,7 +15,9 @@ class World {
 
   int _componentCounter = 0;
   int _entityCounter = 0;
+  int _version = 0;
 
+  int get version => _version;
   int get archetypeCount => _archetypeIndex.length;
   int get entityCount => _entityIndex.length;
   int get componentTypesCount => _componentTypes.length;
@@ -27,6 +29,7 @@ class World {
     _archetypeIndex.clear();
     _componentCounter = 0;
     _entityCounter = 0;
+    _version++;
   }
 
   void clearResources() => _resources.clear();
@@ -40,6 +43,10 @@ class World {
 
   ComponentID? componentID<T extends Component>() {
     return _componentTypes[T];
+  }
+
+  ComponentID? getComponentID(Type type) {
+    return _componentTypes[type];
   }
 
   int componentColumn(ComponentID id, SetHash hash) {
@@ -361,12 +368,12 @@ class World {
 
   List<List<Component>> queryRaw(QueryParams params) {
     final queryRows = <List<Component>>[];
-    if (!params.activate(_componentTypes)) return queryRows;
+    if (!params.activate(this)) return queryRows;
     for (final kv in _archetypeIndex.entries) {
       if (kv.value.isEmpty || !kv.key.contains(params.hash)) continue;
       for (int i = 0; i < kv.value.entityCount; i++) {
         final componentsOfEntity = <Component>[];
-        for (final componentID in params.ids) {
+        for (final componentID in params.componentIDs) {
           componentsOfEntity
               .add(kv.value.components[_componentIndex[componentID]![kv.value.setHash]!][i]);
         }
@@ -378,7 +385,7 @@ class World {
 
   int queryCount(List<Type> types) => queryCountWithParams(QueryParams(types));
   int queryCountWithParams(QueryParams params) {
-    if (!params.activate(_componentTypes)) return 0;
+    if (!params.activate(this)) return 0;
     int queryCount = 0;
     for (final kv in _archetypeIndex.entries) {
       if (kv.value.isEmpty || !kv.key.contains(params.hash)) continue;
