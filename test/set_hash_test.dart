@@ -106,11 +106,9 @@ void main() {
     final x = SetHash([1, 2, 3]);
     final originalHash = x.hashCode;
 
-    // Duplicate add - set'te değişiklik yok
     x.add(2);
     expect(x.hashCode, originalHash);
 
-    // Non-existent remove - set'te değişiklik yok
     x.remove(999);
     expect(x.hashCode, originalHash);
   });
@@ -118,15 +116,12 @@ void main() {
   test('removeAll returns correct boolean', () {
     final x = SetHash([1, 2, 3, 4]);
 
-    // Bazıları var, bazıları yok
     expect(x.removeAll([2, 3, 999]), true);
     expect(x.set, {1, 4});
 
-    // Hiçbiri yok
     expect(x.removeAll([999, 888]), false);
     expect(x.set, {1, 4});
 
-    // Tümü var
     expect(x.removeAll([1, 4]), true);
     expect(x.isEmpty, true);
   });
@@ -135,7 +130,7 @@ void main() {
     final x = SetHash([1, 2, 3]);
 
     expect(x.remove(2), true);
-    expect(x.remove(2), false); // Artık yok
+    expect(x.remove(2), false);
     expect(x.remove(999), false);
   });
 
@@ -145,36 +140,31 @@ void main() {
 
     x.addAll([]);
     expect(x.set, {1, 2, 3});
-    expect(x.hashCode, originalHash); // Hash değişmemeli
+    expect(x.hashCode, originalHash);
   });
 
   test('addAll with duplicates', () {
     final x = SetHash([1, 2]);
     final originalHash = x.hashCode;
 
-    // Hepsi duplicate
     x.addAll([1, 2, 1, 2]);
     expect(x.set, {1, 2});
-    expect(x.hashCode, originalHash); // Hash değişmemeli
+    expect(x.hashCode, originalHash);
 
-    // Bazıları duplicate, bazıları yeni
     x.addAll([2, 3, 1, 4]);
     expect(x.set, {1, 2, 3, 4});
-    expect(x.hashCode, isNot(originalHash)); // Hash değişmeli
+    expect(x.hashCode, isNot(originalHash));
   });
 
   test('equality operator edge cases', () {
     final x = SetHash([1, 2, 3]);
 
-    // Kendisiyle karşılaştırma (identical check)
     expect(x == x, true);
 
-    // Boş setler
     final empty1 = SetHash();
     final empty2 = SetHash();
     expect(empty1, empty2);
 
-    // Farklı boyutta setler
     final small = SetHash([1]);
     final large = SetHash([1, 2, 3, 4, 5]);
     expect(small, isNot(large));
@@ -184,10 +174,8 @@ void main() {
     final x = SetHash([1, 2, 3]);
     final empty = SetHash();
 
-    // Boş set her setin subset'i
     expect(x.contains(empty), true);
 
-    // Boş set sadece boş seti içerir
     expect(empty.contains(empty), true);
     expect(empty.contains(x), false);
   });
@@ -204,17 +192,14 @@ void main() {
     final x = SetHash([1, 2, 3]);
     final y = x.copy();
 
-    // İlk başta eşit
     expect(x, y);
 
-    // x'i değiştir
     x.add(4);
     expect(x, isNot(y));
-    expect(y.set, {1, 2, 3}); // y değişmemeli
+    expect(y.set, {1, 2, 3});
 
-    // y'yi değiştir
     y.remove(1);
-    expect(x.set, {1, 2, 3, 4}); // x değişmemeli
+    expect(x.set, {1, 2, 3, 4});
     expect(y.set, {2, 3});
   });
 
@@ -226,7 +211,6 @@ void main() {
   });
 
   test('large set performance', () {
-    // Büyük set'lerle hash caching'in faydası
     final large = SetHash(List.generate(10000, (i) => i));
 
     final hash1 = large.hashCode;
@@ -238,13 +222,10 @@ void main() {
   });
 
   test('hash collision scenario', () {
-    // Farklı setler ama potansiyel hash collision'ı test et
     final x = SetHash([1, 2, 3]);
     final y = SetHash([4, 5, 6]);
 
-    // Hashler farklı olmalı (çoğu durumda)
     if (x.hashCode == y.hashCode) {
-      // Nadiren collision olabilir, ama equality false dönmeli
       expect(x, isNot(y));
     }
   });

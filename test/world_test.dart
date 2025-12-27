@@ -805,4 +805,100 @@ void main() {
     expect(rows2.first.get<ColorComponent>().r, 3);
     expect(rows3.first.get<ColorComponent>().r, 3);
   });
+
+  test('queryEach works with single component', () {
+    final world = World();
+
+    for (int i = 0; i < 5; i++) {
+      final e = world.createEntity();
+      world.addComponent(e, PositionComponent(x: i.toDouble(), y: i.toDouble()));
+    }
+
+    int count = 0;
+
+    world.queryEach(
+      QueryParams([PositionComponent]),
+      (row) {
+        expect(row.get<PositionComponent>().x, count.toDouble());
+        count++;
+      },
+    );
+
+    expect(count, 5);
+  });
+
+  test('queryEach handles multiple components correctly', () {
+    final world = World();
+
+    final e1 = world.createEntity();
+    world.addComponents(e1, components: [
+      PositionComponent(x: 1, y: 2),
+      VelocityComponent(dx: 0.1, dy: 0.2),
+    ]);
+
+    final e2 = world.createEntity();
+    world.addComponents(e2, components: [
+      PositionComponent(x: 3, y: 4),
+      VelocityComponent(dx: 0.3, dy: 0.4),
+    ]);
+
+    final entities = <EntityID>[];
+    final positions = <double>[];
+    final velocities = <double>[];
+
+    world.queryEach(
+      QueryParams([PositionComponent, VelocityComponent]),
+      (row) {
+        entities.add(row.entity);
+        positions.add(row.get<PositionComponent>().x);
+        velocities.add(row.get<VelocityComponent>().dx);
+      },
+    );
+
+    expect(entities.length, 2);
+
+    expect(positions, [1, 3]);
+    expect(velocities, [0.1, 0.3]);
+  });
+
+  test('queryEach reuses the same QueryRowView instance within a single call', () {
+    final world = World();
+
+    for (int i = 0; i < 3; i++) {
+      final e = world.createEntity();
+      world.addComponent(e, PositionComponent(x: i.toDouble(), y: 0));
+    }
+
+    QueryRowView? firstRow;
+
+    world.queryEach(
+      QueryParams([PositionComponent]),
+      (row) {
+        firstRow ??= row;
+        expect(identical(row, firstRow), isTrue);
+      },
+    );
+  });
+
+  test('queryEach entity id matches component entity id', () {
+    final world = World();
+
+    final entities = <EntityID>[];
+    for (int i = 0; i < 4; i++) {
+      final e = world.createEntity();
+      entities.add(e);
+      world.addComponent(e, PositionComponent(x: i.toDouble(), y: 0));
+    }
+
+    int index = 0;
+
+    world.queryEach(
+      QueryParams([PositionComponent]),
+      (row) {
+        expect(row.entity, entities[index]);
+        expect(row.get<PositionComponent>().entityID, entities[index]);
+        index++;
+      },
+    );
+  });
 }

@@ -1,3 +1,7 @@
+## 1.0.9
+
+* Zero allocation ``queryEach`` function introduced.
+
 ## 1.0.8
 
 * Big performance boost !

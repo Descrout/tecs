@@ -1,3 +1,4 @@
+import 'package:tecs/archetype.dart';
 import 'package:tecs/component.dart';
 import 'package:tecs/set_hash.dart';
 import 'package:tecs/types.dart';
@@ -15,6 +16,33 @@ class QueryRow {
   @pragma('vm:prefer-inline')
   T get<T extends Component>() {
     return _componentsBuffer[_offset + _typeIndices[T]!] as T;
+  }
+}
+
+class QueryRowView {
+  late Archetype _archetype;
+  late List<int> _columns;
+  late int _row;
+  late Map<Type, int> _typeIndices;
+
+  void bind(
+    Archetype archetype,
+    List<int> columns,
+    int row,
+    Map<Type, int> typeIndices,
+  ) {
+    _archetype = archetype;
+    _columns = columns;
+    _row = row;
+    _typeIndices = typeIndices;
+  }
+
+  @pragma('vm:prefer-inline')
+  EntityID get entity => _archetype.components[_columns[0]][_row].entityID;
+
+  @pragma('vm:prefer-inline')
+  T get<T extends Component>() {
+    return _archetype.components[_columns[_typeIndices[T]!]][_row] as T;
   }
 }
 

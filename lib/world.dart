@@ -368,6 +368,34 @@ class World {
     return newEntities;
   }
 
+  void queryEach(
+    QueryParams params,
+    void Function(QueryRowView row) fn,
+  ) {
+    if (!params.activate(this)) return;
+
+    final componentIDs = params.componentIDs;
+    final typeIndices = params.typeIndices;
+    final columns = List<int>.filled(componentIDs.length, 0);
+
+    final row = QueryRowView();
+
+    for (final archetype in _archetypeIndex.values) {
+      if (archetype.isEmpty || !archetype.setHash.contains(params.hash)) {
+        continue;
+      }
+
+      for (int c = 0; c < componentIDs.length; c++) {
+        columns[c] = _componentIndex[componentIDs[c]]![archetype.setHash]!;
+      }
+
+      for (int i = 0; i < archetype.entityCount; i++) {
+        row.bind(archetype, columns, i, typeIndices);
+        fn(row);
+      }
+    }
+  }
+
   List<Component> queryRaw(QueryParams params) {
     final queryRows = <Component>[];
     if (!params.activate(this)) return queryRows;

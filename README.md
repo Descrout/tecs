@@ -1,9 +1,24 @@
 # TECS
 
-Simple archetype based ECS written in dart.  
-Made for learning purposes so keep that in mind before using it.  
-Any improvements or suggestions are welcome.
+Archetype based ECS written in dart.
 
+```dart
+class MoveSystem extends System<double> {
+  final params = QueryParams([PositionComponent, VelocityComponent]);
+
+  @override
+  void update(double deltaTime) {
+    world.queryEach(params, (row) {
+      final position = row.get<PositionComponent>();
+      final velocity = row.get<VelocityComponent>();
+
+      position.x += velocity.x * deltaTime;
+      position.y += velocity.y * deltaTime;
+    });
+  }
+}
+```
+# Documentation
 ## World
 ```dart
 import 'package:tecs/tecs.dart';
@@ -106,7 +121,7 @@ for (final row in queryResult) {
     position.y += velocity.y;
 }
 ```
-#### Optimized query with cached parameters (recommended for systems)
+#### Optimized query with cached parameters
 ```dart
 // Create query parameters once and cache them.
 // This should be done during system initialization.
@@ -125,6 +140,26 @@ for (int i = 0; i < 1000; i++) { // e.g. inside an update() loop
     position.x += velocity.x;
     position.y += velocity.y;
   }
+}
+```
+#### Allocation-free iteration with queryEach (hot path) [RECOMMENDED]
+```dart
+final params = QueryParams([
+  PositionComponent,
+  VelocityComponent,
+]);
+
+for (int i = 0; i < 1000; i++) { // e.g. inside an update() loop
+  world.queryEach(params, (row) {
+    // NOTE: QueryRowView is a view, not a value object.
+    // NOTE: Do not store the row reference or use it outside the callback.
+
+    final position = row.get<PositionComponent>();
+    final velocity = row.get<VelocityComponent>();
+
+    position.x += velocity.x;
+    position.y += velocity.y;
+  });
 }
 ```
 ## Resources
