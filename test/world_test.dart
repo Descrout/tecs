@@ -61,6 +61,12 @@ class HealthComponent extends Component {
   final int health;
 }
 
+class AComponent extends Component {}
+
+class BComponent extends Component {}
+
+class CComponent extends Component {}
+
 void main() {
   test('creating entity must match with entityID', () {
     final world = World();
@@ -131,7 +137,7 @@ void main() {
 
     final entity1 = world.createEntity();
     world.addComponent(entity1, PositionComponent(x: 3, y: 4));
-    world.addComponents(entity1, components: [
+    world.addComponents(entity1, [
       NameComponent(name: "ent1"),
       ColorComponent(r: 9, g: 12, b: 111),
     ]);
@@ -146,7 +152,7 @@ void main() {
     expect(name1!.name, "ent1");
 
     final entity2 = world.createEntity();
-    world.addComponents(entity2, components: [
+    world.addComponents(entity2, [
       PositionComponent(x: 7, y: 8),
       ColorComponent(r: 9, g: 12, b: 111),
     ]);
@@ -738,7 +744,7 @@ void main() {
     expect(result1.length, 1);
 
     final e2 = world.createEntity();
-    world.addComponents(e2, components: [
+    world.addComponents(e2, [
       PositionComponent(x: 3, y: 4),
       ColorComponent(r: 1, g: 2, b: 3),
       VelocityComponent(dx: 0.5, dy: 0.6),
@@ -831,13 +837,13 @@ void main() {
     final world = World();
 
     final e1 = world.createEntity();
-    world.addComponents(e1, components: [
+    world.addComponents(e1, [
       PositionComponent(x: 1, y: 2),
       VelocityComponent(dx: 0.1, dy: 0.2),
     ]);
 
     final e2 = world.createEntity();
-    world.addComponents(e2, components: [
+    world.addComponents(e2, [
       PositionComponent(x: 3, y: 4),
       VelocityComponent(dx: 0.3, dy: 0.4),
     ]);
@@ -900,5 +906,437 @@ void main() {
         index++;
       },
     );
+  });
+
+  test('queryEachPairs iterates all valid cross pairs', () {
+    final world = World();
+
+    final a1 = world.createEntity();
+    world.addComponent(a1, AComponent());
+
+    final a2 = world.createEntity();
+    world.addComponent(a2, AComponent());
+
+    final b1 = world.createEntity();
+    world.addComponent(b1, BComponent());
+
+    final b2 = world.createEntity();
+    world.addComponent(b2, BComponent());
+
+    final aParams = QueryParams([AComponent]);
+    final bParams = QueryParams([BComponent]);
+
+    final pairs = <String>{};
+
+    world.queryEachPairs(
+      aParams,
+      bParams,
+      (a, b) {
+        pairs.add('${a.entity}-${b.entity}');
+      },
+    );
+
+    expect(pairs.length, 4);
+    expect(pairs, contains('$a1-$b1'));
+    expect(pairs, contains('$a1-$b2'));
+    expect(pairs, contains('$a2-$b1'));
+    expect(pairs, contains('$a2-$b2'));
+  });
+
+  test('queryEachPairs never yields same entity pair', () {
+    final world = World();
+
+    final e = world.createEntity();
+    world.addComponent(e, AComponent());
+    world.addComponent(e, BComponent());
+
+    world.queryEachPairs(
+      QueryParams([AComponent]),
+      QueryParams([BComponent]),
+      (a, b) {
+        expect(a.entity, isNot(b.entity));
+      },
+    );
+  });
+
+  test('queryEachPairs reuses row views without allocating new ones', () {
+    final world = World();
+
+    for (int i = 0; i < 3; i++) {
+      final a = world.createEntity();
+      world.addComponent(a, AComponent());
+
+      final b = world.createEntity();
+      world.addComponent(b, BComponent());
+    }
+
+    final aInstances = <QueryRowView>{};
+    final bInstances = <QueryRowView>{};
+
+    world.queryEachPairs(
+      QueryParams([AComponent]),
+      QueryParams([BComponent]),
+      (a, b) {
+        aInstances.add(a);
+        bInstances.add(b);
+      },
+    );
+
+    // Only one instance per side should exist
+    expect(aInstances.length, 1);
+    expect(bInstances.length, 1);
+  });
+
+  test('queryEachPairsSelf yields unique unordered pairs', () {
+    final world = World();
+
+    final entities = <EntityID>[];
+    for (int i = 0; i < 4; i++) {
+      final e = world.createEntity();
+      world.addComponent(e, AComponent());
+      entities.add(e);
+    }
+
+    final pairs = <Set<EntityID>>[];
+
+    world.queryEachPairsSelf(
+      QueryParams([AComponent]),
+      (a, b) {
+        pairs.add({a.entity, b.entity});
+      },
+    );
+
+    // n * (n - 1) / 2
+    expect(pairs.length, 6);
+
+    // no duplicates
+    expect(pairs.toSet().length, 6);
+  });
+
+  test('queryEachPairsSelf never yields same entity', () {
+    final world = World();
+
+    for (int i = 0; i < 3; i++) {
+      final e = world.createEntity();
+      world.addComponent(e, AComponent());
+    }
+
+    world.queryEachPairsSelf(
+      QueryParams([AComponent]),
+      (a, b) {
+        expect(a.entity, isNot(b.entity));
+      },
+    );
+  });
+
+  test('queryEachPairsSelf reuses exactly two row views', () {
+    final world = World();
+
+    for (int i = 0; i < 4; i++) {
+      final e = world.createEntity();
+      world.addComponent(e, AComponent());
+    }
+
+    final instances = <QueryRowView>{};
+
+    world.queryEachPairsSelf(
+      QueryParams([AComponent]),
+      (a, b) {
+        instances.add(a);
+        instances.add(b);
+      },
+    );
+
+    // Exactly two row views reused
+    expect(instances.length, 2);
+  });
+
+  test('entities removed via command buffer after iteration', () {
+    final world = World();
+
+    final e = world.createEntity();
+    world.addComponent(e, HealthComponent(health: 0));
+
+    final e2 = world.createEntity();
+    world.addComponents(e2, [HealthComponent(health: 1), AComponent()]);
+
+    world.queryEach(
+      QueryParams([HealthComponent]),
+      (row) {
+        if (row.get<HealthComponent>().health <= 0) {
+          world.commands.removeEntity(row.entity);
+        } else {
+          world.commands.removeComponent(row.entity, AComponent);
+        }
+      },
+    );
+
+    // Still exists during iteration
+    expect(world.isAlive(e), isTrue);
+    expect(world.getComponent<AComponent>(e2), isNotNull);
+
+    world.flushCommands();
+
+    expect(world.isAlive(e), isFalse);
+    expect(world.getComponent<AComponent>(e2), isNull);
+  });
+
+  test('commands after removeEntity should be skipped', () {
+    final world = World();
+
+    final e = world.createEntity();
+    world.addComponent(e, PositionComponent(x: 0, y: 0));
+
+    world.commands.addComponent(e, VelocityComponent(dx: 1, dy: 1));
+    world.commands.removeEntity(e);
+    world.commands.addComponent(e, ColorComponent(r: 255, g: 0, b: 0));
+    world.commands.removeComponent(e, PositionComponent);
+
+    expect(world.commands.length, 2);
+
+    world.flushCommands();
+
+    expect(world.isAlive(e), false);
+  });
+
+  test('commands before removeEntity should execute', () {
+    final world = World();
+
+    final e = world.createEntity();
+
+    world.addComponent(e, PositionComponent(x: 1, y: 2));
+    world.commands.addComponent(e, VelocityComponent(dx: 1, dy: 1));
+    world.commands.removeEntity(e);
+
+    world.flushCommands();
+
+    expect(world.isAlive(e), false);
+  });
+
+  test('removeEntity and removeEntities should work with one entity', () {
+    final world = World();
+
+    final e = world.createEntity();
+    expect(world.isAlive(e), true);
+    expect(world.removeEntity(e), true);
+    expect(world.removeEntity(e), false);
+    expect(world.isAlive(e), false);
+
+    final e2 = world.createEntity();
+    expect(world.isAlive(e2), true);
+    world.removeEntities([e2]);
+    expect(world.isAlive(e2), false);
+  });
+
+  test('removeEntities removes all specified entities', () {
+    final world = World();
+
+    final entities = <EntityID>[];
+    for (int i = 0; i < 10; i++) {
+      final e = world.createEntity();
+      world.addComponent(e, PositionComponent(x: i.toDouble(), y: 0));
+      entities.add(e);
+    }
+
+    expect(world.entityCount, 10);
+
+    world.removeEntities(entities);
+
+    expect(world.entityCount, 0);
+  });
+
+  test('removeEntities removes only specified entities', () {
+    final world = World();
+
+    final keep = <EntityID>[];
+    final remove = <EntityID>[];
+
+    for (int i = 0; i < 10; i++) {
+      final e = world.createEntity();
+      world.addComponent(e, PositionComponent(x: i.toDouble(), y: 0));
+      if (i.isEven) {
+        remove.add(e);
+      } else {
+        keep.add(e);
+      }
+    }
+
+    world.removeEntities(remove);
+
+    expect(world.entityCount, keep.length);
+
+    for (final e in keep) {
+      expect(world.isAlive(e), isTrue);
+    }
+  });
+
+  test('removeEntities keeps entityRow indices correct', () {
+    final world = World();
+
+    final entities = <EntityID>[];
+    for (int i = 0; i < 5; i++) {
+      final e = world.createEntity();
+      world.addComponent(e, PositionComponent(x: i.toDouble(), y: 0));
+      entities.add(e);
+    }
+
+    // remove middle entity
+    world.removeEntities([entities[2]]);
+
+    final rows = world.query([PositionComponent]);
+    expect(rows.length, 4);
+
+    for (int i = 0; i < rows.length; i++) {
+      final pos = rows[i].get<PositionComponent>();
+      expect(pos.x, isNot(2)); // removed one
+      expect(rows[i].entity, pos.entityID);
+    }
+  });
+
+  test('removeEntities works across multiple archetypes', () {
+    final world = World();
+
+    final e1 = world.createEntity();
+    world.addComponent(e1, PositionComponent(x: 1, y: 1));
+
+    final e2 = world.createEntity();
+    world.addComponent(e2, PositionComponent(x: 2, y: 2));
+    world.addComponent(e2, VelocityComponent(dx: 1, dy: 1));
+
+    final e3 = world.createEntity();
+    world.addComponent(e3, PositionComponent(x: 3, y: 3));
+
+    world.removeEntities([e1, e2]);
+
+    expect(world.isAlive(e1), isFalse);
+    expect(world.isAlive(e2), isFalse);
+    expect(world.isAlive(e3), isTrue);
+  });
+
+  test('removeEntities batch vs individual performance', () {
+    const entityCount = 10000;
+
+    // -------- individual remove --------
+    final world1 = World();
+    final entities1 = <EntityID>[];
+
+    for (int i = 0; i < entityCount; i++) {
+      final e = world1.createEntity();
+      world1.addComponent(e, PositionComponent(x: i.toDouble(), y: 0));
+      entities1.add(e);
+    }
+
+    final sw1 = Stopwatch()..start();
+    for (final e in entities1) {
+      world1.removeEntity(e);
+    }
+    sw1.stop();
+
+    // -------- batch remove --------
+    final world2 = World();
+    final entities2 = <EntityID>[];
+
+    for (int i = 0; i < entityCount; i++) {
+      final e = world2.createEntity();
+      world2.addComponent(e, PositionComponent(x: i.toDouble(), y: 0));
+      entities2.add(e);
+    }
+
+    final sw2 = Stopwatch()..start();
+    world2.removeEntities(entities2);
+    sw2.stop();
+
+    print('Individual remove: ${sw1.elapsedMilliseconds} ms');
+    print('Batch remove:      ${sw2.elapsedMilliseconds} ms');
+  });
+
+  test('creates entity with single component', () {
+    final world = World();
+
+    final e = world.createEntityWith([
+      PositionComponent(x: 1, y: 2),
+    ]);
+
+    expect(world.isAlive(e), isTrue);
+
+    final pos = world.getComponent<PositionComponent>(e);
+    expect(pos, isNotNull);
+    expect(pos!.x, 1);
+    expect(pos.y, 2);
+    expect(pos.entityID, e);
+  });
+
+  test('creates entity with multiple components', () {
+    final world = World();
+
+    final e = world.createEntityWith([
+      PositionComponent(x: 1, y: 2),
+      VelocityComponent(dx: 0.1, dy: 0.2),
+      HealthComponent(health: 100),
+    ]);
+
+    final pos = world.getComponent<PositionComponent>(e)!;
+    final vel = world.getComponent<VelocityComponent>(e)!;
+    final hp = world.getComponent<HealthComponent>(e)!;
+
+    expect(pos.entityID, e);
+    expect(vel.entityID, e);
+    expect(hp.entityID, e);
+
+    expect(pos.x, 1);
+    expect(vel.dx, 0.1);
+    expect(hp.health, 100);
+  });
+
+  test('multiple entities created with same component set do not overwrite each other', () {
+    final world = World();
+
+    final e1 = world.createEntityWith([
+      PositionComponent(x: 1, y: 1),
+      VelocityComponent(dx: 1, dy: 1),
+    ]);
+
+    final e2 = world.createEntityWith([
+      PositionComponent(x: 2, y: 2),
+      VelocityComponent(dx: 2, dy: 2),
+    ]);
+
+    final p1 = world.getComponent<PositionComponent>(e1)!;
+    final p2 = world.getComponent<PositionComponent>(e2)!;
+
+    expect(p1.x, 1);
+    expect(p2.x, 2);
+    expect(p1.entityID, e1);
+    expect(p2.entityID, e2);
+  });
+
+  test('query sees entity created with createEntityWith', () {
+    final world = World();
+
+    final e = world.createEntityWith([
+      PositionComponent(x: 10, y: 20),
+    ]);
+
+    final rows = world.query([PositionComponent]);
+    expect(rows.length, 1);
+    expect(rows.first.entity, e);
+    expect(rows.first.get<PositionComponent>().x, 10);
+  });
+
+  test('entityRow consistency after multiple createEntityWith calls', () {
+    final world = World();
+
+    for (int i = 0; i < 10; i++) {
+      world.createEntityWith([
+        PositionComponent(x: i.toDouble(), y: 0),
+      ]);
+    }
+
+    final rows = world.query([PositionComponent]);
+    expect(rows.length, 10);
+
+    for (int i = 0; i < rows.length; i++) {
+      expect(rows[i].get<PositionComponent>().x, i.toDouble());
+    }
   });
 }

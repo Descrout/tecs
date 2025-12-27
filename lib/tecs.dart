@@ -1,5 +1,6 @@
 library tecs;
 
+export 'package:tecs/command_buffer.dart';
 export 'package:tecs/component.dart';
 export 'package:tecs/query.dart';
 export 'package:tecs/system.dart';

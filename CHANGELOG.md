@@ -1,3 +1,11 @@
+## 1.0.10
+
+* ``queryEachPairs``, ``queryEachPairsSelf`` functions introduced.
+* ``CommandBuffer`` implemented to manipulate world state lazily.
+* ``removeEntities`` function introduced for performant batch removing of entities.
+* ``createEntities`` and ``addComponents`` performance increased.
+* ``createEntityWith`` function added.
+
 ## 1.0.9
 
 * Zero allocation ``queryEach`` function introduced.
@@ -5,6 +13,7 @@
 ## 1.0.8
 
 * Big performance boost !
+* ``archetypesWith`` renamed to ``findMatchingArchetypes``.
 
 ## 1.0.7
 
