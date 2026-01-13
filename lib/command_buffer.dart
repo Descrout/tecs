@@ -59,6 +59,11 @@ class CommandBuffer {
   }
 
   @pragma('vm:prefer-inline')
+  void createEntities(List<List<Component>> entities) {
+    _createEntities.addAll(entities);
+  }
+
+  @pragma('vm:prefer-inline')
   void removeComponent(EntityID e, Type type) {
     if (_removedEntities.contains(e)) return;
     _commands.add(_Command.removeComponent(e, type));

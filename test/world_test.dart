@@ -67,6 +67,11 @@ class BComponent extends Component {}
 
 class CComponent extends Component {}
 
+class TComponent<T> extends Component {
+  T val;
+  TComponent(this.val);
+}
+
 void main() {
   test('creating entity must match with entityID', () {
     final world = World();
@@ -1338,5 +1343,44 @@ void main() {
     for (int i = 0; i < rows.length; i++) {
       expect(rows[i].get<PositionComponent>().x, i.toDouble());
     }
+  });
+
+  test('testing generic components', () {
+    final world = World();
+
+    final entities = List.generate(3, (_) => world.createEntity());
+
+    world.addComponent(entities[0], TComponent<String>("this is a string"));
+    world.addComponent(entities[1], TComponent<double>(3.14159));
+
+    world.addComponents(entities[2], [TComponent<int>(2), TComponent<bool>(true)]);
+
+    final tFailGeneric = world.getComponent<TComponent>(entities[0]);
+    expect(tFailGeneric, isNull);
+
+    final t1 = world.getComponent<TComponent<String>>(entities[0]);
+    expect(t1, isNotNull);
+    expect(t1!.val, "this is a string");
+
+    final t2 = world.getComponent<TComponent<double>>(entities[1]);
+    expect(t2, isNotNull);
+    expect(t2!.val, 3.14159);
+
+    final t3Int = world.getComponent<TComponent<int>>(entities[2]);
+    final t3Bool = world.getComponent<TComponent<bool>>(entities[2]);
+    expect(t3Int, isNotNull);
+    expect(t3Bool, isNotNull);
+    expect(t3Int!.val, 2);
+    expect(t3Bool!.val, true);
+
+    world.commands.createEntityWith([TComponent<double>(1.1), TComponent<bool>(false)]);
+    world.commands
+        .addComponents(world.createEntity(), [TComponent<String>("hey"), TComponent<bool>(false)]);
+    world.commands.flush(world);
+
+    expect(world.queryCount([TComponent]), 0);
+    expect(world.queryCount([TComponent<String>]), 2);
+    expect(world.queryCount([TComponent<bool>]), 3);
+    expect(world.queryCount([TComponent<double>]), 2);
   });
 }
