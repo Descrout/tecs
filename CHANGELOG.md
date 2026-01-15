@@ -1,3 +1,8 @@
+## 1.0.11
+
+* ``createEntities`` added to ``CommandBuffer``.
+* Generic components test have been added.
+
 ## 1.0.10
 
 * ``queryEachPairs``, ``queryEachPairsSelf`` functions introduced.
