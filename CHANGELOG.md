@@ -1,4 +1,4 @@
-## 1.0.2
+## 1.0.12
 
 * ``runSystemOnce`` added to ``World``.
 * Instant world state changes moved to ``world.instant.{functionName}`` namespace for clarity.
