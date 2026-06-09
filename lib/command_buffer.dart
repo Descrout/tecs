@@ -3,13 +3,14 @@ import 'package:tecs/types.dart';
 import 'package:tecs/world.dart';
 
 sealed class _Command {
-  final EntityID entity;
-  _Command(this.entity);
+  final EntityID entityID;
+  _Command(this.entityID);
 
-  factory _Command.addComponent(EntityID entity, Component c) = _AddComponent;
-  factory _Command.removeComponent(EntityID entity, Type t) = _RemoveComponent;
-  factory _Command.addComponents(EntityID entity, List<Component> c) = _AddComponents;
-  factory _Command.removeComponents(EntityID entity, List<Type> c) = _RemoveComponents;
+  factory _Command.addComponent(EntityID entityID, Component component) = _AddComponent;
+  factory _Command.removeComponent(EntityID entityID, Type componentType) = _RemoveComponent;
+  factory _Command.addComponents(EntityID entityID, List<Component> components) = _AddComponents;
+  factory _Command.removeComponents(EntityID entityID, List<Type> componentTypes) =
+      _RemoveComponents;
 }
 
 class _AddComponent extends _Command {
@@ -41,21 +42,21 @@ class CommandBuffer {
   final List<List<Component>> _createEntities = [];
 
   @pragma('vm:prefer-inline')
-  void removeEntity(EntityID e) {
-    if (_removedEntities.add(e)) {
+  void removeEntity(EntityID entityID) {
+    if (_removedEntities.add(entityID)) {
       _removeCount++;
     }
   }
 
   @pragma('vm:prefer-inline')
-  void addComponent(EntityID e, Component c) {
-    if (_removedEntities.contains(e)) return;
-    _commands.add(_Command.addComponent(e, c));
+  void addComponent(EntityID entityID, Component component) {
+    if (_removedEntities.contains(entityID)) return;
+    _commands.add(_Command.addComponent(entityID, component));
   }
 
   @pragma('vm:prefer-inline')
-  void createEntityWith(List<Component> c) {
-    _createEntities.add(c);
+  void createEntityWith(List<Component> components) {
+    _createEntities.add(components);
   }
 
   @pragma('vm:prefer-inline')
@@ -64,21 +65,21 @@ class CommandBuffer {
   }
 
   @pragma('vm:prefer-inline')
-  void removeComponent(EntityID e, Type type) {
-    if (_removedEntities.contains(e)) return;
-    _commands.add(_Command.removeComponent(e, type));
+  void removeComponent(EntityID entityID, Type componentType) {
+    if (_removedEntities.contains(entityID)) return;
+    _commands.add(_Command.removeComponent(entityID, componentType));
   }
 
   @pragma('vm:prefer-inline')
-  void addComponents(EntityID e, List<Component> c) {
-    if (_removedEntities.contains(e)) return;
-    _commands.add(_Command.addComponents(e, c));
+  void addComponents(EntityID entityID, List<Component> components) {
+    if (_removedEntities.contains(entityID)) return;
+    _commands.add(_Command.addComponents(entityID, components));
   }
 
   @pragma('vm:prefer-inline')
-  void removeComponents(EntityID e, List<Type> c) {
-    if (_removedEntities.contains(e)) return;
-    _commands.add(_Command.removeComponents(e, c));
+  void removeComponents(EntityID entityID, List<Type> componentTypes) {
+    if (_removedEntities.contains(entityID)) return;
+    _commands.add(_Command.removeComponents(entityID, componentTypes));
   }
 
   void apply(World world) {
@@ -89,19 +90,19 @@ class CommandBuffer {
     }
 
     for (final cmd in _commands) {
-      if (_removeCount > 0 && _removedEntities.contains(cmd.entity)) continue;
+      if (_removeCount > 0 && _removedEntities.contains(cmd.entityID)) continue;
       switch (cmd) {
         case _AddComponent(component: final component):
-          world.instant.addComponent(cmd.entity, component);
+          world.instant.addComponent(cmd.entityID, component);
           break;
         case _RemoveComponent(componentType: final componentType):
-          world.instant.removeComponentByType(cmd.entity, componentType);
+          world.instant.removeComponentByType(cmd.entityID, componentType);
           break;
         case _AddComponents(components: final components):
-          world.instant.addComponents(cmd.entity, components);
+          world.instant.addComponents(cmd.entityID, components);
           break;
         case _RemoveComponents(componentTypes: final componentTypes):
-          world.instant.removeComponents(cmd.entity, components: componentTypes);
+          world.instant.removeComponents(cmd.entityID, components: componentTypes);
           break;
       }
     }

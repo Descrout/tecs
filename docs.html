@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TECS Documentation — Tremble ECS</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --border: #30363d;
+    --text: #e6edf3;
+    --text-dim: #8b949e;
+    --accent: #58a6ff;
+    --accent2: #3fb950;
+    --accent3: #d2a8ff;
+    --code-bg: #1c2128;
+    --tag-bg: #1f2937;
+    --line: #21262d;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    font-size: 15px;
+    display: flex;
+  }
+  nav {
+    position: fixed; top: 0; left: 0; bottom: 0; width: 260px;
+    background: var(--surface); border-right: 1px solid var(--border);
+    overflow-y: auto; padding: 24px 0; z-index: 10;
+  }
+  nav h1 {
+    font-size: 16px; padding: 0 20px 16px; margin-bottom: 8px;
+    border-bottom: 1px solid var(--line); color: var(--accent2);
+    font-weight: 700; letter-spacing: 0.3px;
+  }
+  nav a {
+    display: block; padding: 5px 20px; color: var(--text-dim);
+    text-decoration: none; font-size: 13px; transition: color .15s;
+    border-left: 2px solid transparent;
+  }
+  nav a:hover, nav a.active { color: var(--text); }
+  nav a.section { color: var(--text); font-weight: 600; margin-top: 12px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+  nav a.section:hover { color: var(--accent); }
+  main {
+    margin-left: 260px; padding: 48px 56px; max-width: 900px; flex: 1;
+  }
+  h2 { font-size: 26px; margin: 40px 0 16px; color: var(--text); border-bottom: 1px solid var(--line); padding-bottom: 8px; }
+  h3 { font-size: 18px; margin: 28px 0 12px; color: var(--text); }
+  h4 { font-size: 15px; margin: 20px 0 8px; color: var(--text-dim); }
+  p, li { color: var(--text-dim); }
+  p { margin-bottom: 12px; }
+  ul, ol { padding-left: 20px; margin-bottom: 16px; }
+  li { margin-bottom: 4px; }
+
+  pre {
+    background: var(--code-bg); border: 1px solid var(--border);
+    border-radius: 8px; padding: 16px 20px; overflow-x: auto;
+    margin: 12px 0 20px; font-size: 13px; line-height: 1.6;
+    position: relative;
+  }
+  code { font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace; }
+  p > code, li > code {
+    background: var(--code-bg); padding: 2px 6px; border-radius: 4px;
+    font-size: 13px; border: 1px solid var(--border);
+  }
+  .tag {
+    display: inline-block; background: var(--tag-bg); color: var(--accent3);
+    font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: 10px;
+    letter-spacing: 0.3px; vertical-align: middle; margin-left: 4px;
+  }
+  .tag-immediate { color: #f0883e; background: rgba(240,136,62,.15); }
+  .tag-deferred { color: #58a6ff; background: rgba(88,166,255,.15); }
+  .badge {
+    display: inline-block; padding: 2px 10px; border-radius: 6px;
+    font-size: 12px; font-weight: 600; letter-spacing: 0.3px;
+  }
+  .badge-green { background: rgba(63,185,80,.15); color: var(--accent2); }
+  .badge-red { background: rgba(248,81,73,.15); color: #f85149; }
+  .badge-blue { background: rgba(88,166,255,.15); color: var(--accent); }
+
+  .note {
+    background: rgba(88,166,255,.08); border-left: 3px solid var(--accent);
+    padding: 12px 16px; border-radius: 6px; margin: 16px 0; font-size: 14px;
+  }
+  .note strong { color: var(--accent); }
+  .warn {
+    background: rgba(240,136,62,.1); border-left: 3px solid #f0883e;
+    padding: 12px 16px; border-radius: 6px; margin: 16px 0; font-size: 14px;
+  }
+  .warn strong { color: #f0883e; }
+
+  table {
+    width: 100%; border-collapse: collapse; margin: 16px 0 24px;
+    font-size: 14px;
+  }
+  th, td {
+    text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--line);
+  }
+  th { color: var(--text); font-weight: 600; background: var(--surface); }
+
+  .method-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 12px; margin: 16px 0;
+  }
+  .method-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 12px 16px;
+  }
+  .method-card .name { font-family: monospace; font-weight: 600; color: var(--accent); }
+  .method-card .desc { font-size: 13px; color: var(--text-dim); margin-top: 4px; }
+
+  .keyword { color: #ff7b72; }
+  .type { color: #79c0ff; }
+  .string { color: #a5d6ff; }
+  .comment { color: #8b949e; }
+  .func { color: #d2a8ff; }
+  .num { color: #79c0ff; }
+
+  hr { border: none; border-top: 1px solid var(--line); margin: 32px 0; }
+  .header-anchor { color: var(--accent); text-decoration: none; margin-left: 4px; font-size: 20px; opacity: 0; transition: opacity .15s; }
+  h2:hover .header-anchor, h3:hover .header-anchor { opacity: 1; }
+
+  @media (max-width: 768px) {
+    nav { position: static; width: 100%; border-right: none; border-bottom: 1px solid var(--border); }
+    main { margin-left: 0; padding: 24px; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <h1>TECS</h1>
+  <a href="#overview" class="section">Overview</a>
+  <a href="#installation">Installation</a>
+  <a href="#world" class="section">World</a>
+  <a href="#world-create">Creating a World</a>
+  <a href="#world-lifecycle">Lifecycle Methods</a>
+  <a href="#entities" class="section">Entities</a>
+  <a href="#entity-create">Creating Entities</a>
+  <a href="#entity-remove">Removing Entities</a>
+  <a href="#entity-status">Checking Status</a>
+  <a href="#components" class="section">Components</a>
+  <a href="#component-def">Defining Components</a>
+  <a href="#component-add">Adding Components</a>
+  <a href="#component-get">Getting Components</a>
+  <a href="#component-remove">Removing Components</a>
+  <a href="#queries" class="section">Queries</a>
+  <a href="#query-simple">Simple Query</a>
+  <a href="#query-cached">Cached (QueryParams)</a>
+  <a href="#query-each">Allocation-free (queryEach)</a>
+  <a href="#query-pairs">Pair Iteration</a>
+  <a href="#query-raw">Raw / Count</a>
+  <a href="#systems" class="section">Systems</a>
+  <a href="#system-def">Defining Systems</a>
+  <a href="#system-tags">System Tags</a>
+  <a href="#system-update">Updating Systems</a>
+  <a href="#resources" class="section">Resources</a>
+  <a href="#commands" class="section">Commands vs Instant</a>
+  <a href="#commands-deferred">CommandBuffer (Deferred)</a>
+  <a href="#commands-instant">InstantChanges (Immediate)</a>
+  <a href="#commands-when">When to Use Which</a>
+  <a href="#api" class="section">API Reference</a>
+</nav>
+
+<main>
+
+<h1 id="overview" style="font-size:32px;margin-bottom:4px;">TECS <span style="font-weight:400;color:var(--text-dim);font-size:18px;">— Tremble ECS</span></h1>
+<p style="margin-bottom:24px;">An archetype-based Entity Component System written in Dart.</p>
+
+<div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;">
+  <a href="https://pub.dev/packages/tecs" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 16px;color:var(--text-dim);text-decoration:none;font-size:13px;display:flex;align-items:center;gap:6px;" target="_blank">
+    <span style="color:var(--accent);font-size:16px;">📦</span> pub.dev/packages/tecs
+  </a>
+  <a href="https://github.com/Descrout/tecs" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 16px;color:var(--text-dim);text-decoration:none;font-size:13px;display:flex;align-items:center;gap:6px;" target="_blank">
+    <span style="color:var(--text);font-size:16px;"></span> github.com/Descrout/tecs
+  </a>
+</div>
+
+<div class="note">
+<strong>What is ECS?</strong> ECS (Entity Component System) is a data-oriented architectural pattern
+that separates data (Components) from behaviour (Systems) and identity (Entities).
+Entities are lightweight IDs, components are plain data bags, and systems contain the logic.
+</div>
+
+<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 20px;margin:20px 0;">
+  <div style="font-size:14px;color:var(--text-dim);margin-bottom:6px;">✨ Made with TECS</div>
+  <a href="https://descrout.itch.io/lunapulse" target="_blank" style="color:var(--accent);font-size:18px;font-weight:600;text-decoration:none;">
+    LunaPulse <span style="color:var(--text-dim);font-weight:400;font-size:14px;">→ descrout.itch.io/lunapulse</span>
+  </a>
+  <div style="color:var(--text-dim);font-size:13px;margin-top:4px;">A space shmup built with TECS + <a href="https://pub.dev/packages/tremble" target="_blank" style="color:var(--accent);font-size:13px;font-weight:600;text-decoration:none;">Tremble</a></div>
+</div>
+
+<h3>Core Principles</h3>
+<ul>
+  <li><strong>Archetype-based storage</strong> — Entities with the same component composition are stored together in contiguous arrays for cache-friendly iteration.</li>
+  <li><strong>Two mutation paths</strong> — Immediate changes via <code>world.instant.*</code> and deferred changes via <code>world.commands.*</code> (see <a href="#commands">Commands vs Instant</a>).</li>
+  <li><strong>Allocation-free queries</strong> — <code>queryEach</code> reuses a single row view to avoid GC pressure on hot paths.</li>
+  <li><strong>Cached query resolution</strong> — <code>QueryParams</code> caches component IDs and archetype lookups between frames.</li>
+</ul>
+
+<hr>
+
+<h2 id="installation">Installation</h2>
+<p>Add to your <code>pubspec.yaml</code>:</p>
+<pre><span class="keyword">dependencies</span>:
+  <span class="type">tecs</span>: <span class="string">^1.0.2</span></pre>
+<p>Or via git:</p>
+<pre><span class="keyword">dependencies</span>:
+  <span class="type">tecs</span>:
+    <span class="type">git</span>:
+      <span class="type">url</span>: <span class="string">https://github.com/Descrout/tecs.git</span></pre>
+
+<hr>
+
+<!-- ─── WORLD ─── -->
+<h2 id="world">World</h2>
+<p>The <code>World</code> is the central container. It owns all entities, components, archetypes, systems, and resources.</p>
+
+<h3 id="world-create">Creating a World</h3>
+<pre><span class="keyword">import</span> <span class="string">'package:tecs/tecs.dart'</span>;
+
+<span class="keyword">final</span> world = <span class="func">World</span>();</pre>
+
+<h3 id="world-lifecycle">Lifecycle Methods</h3>
+<table>
+<tr><th>Method</th><th>Description</th></tr>
+<tr><td><code>clearAll()</code></td><td>Removes all entities, systems and resources. Resets world state completely.</td></tr>
+<tr><td><code>clearEntities()</code></td><td>Clears all entities, archetypes and component type registrations. Increments the internal <code>version</code>, invalidating query caches.</td></tr>
+<tr><td><code>clearSystems()</code></td><td>Removes all registered systems.</td></tr>
+<tr><td><code>clearResources()</code></td><td>Removes all resources.</td></tr>
+<tr><td><code>applyCommands()</code></td><td>Forces execution of all buffered commands.</td></tr>
+<tr><td><code>update(args, {tag})</code></td><td>Runs all systems matching the given tag, then calls <code>applyCommands()</code>.</td></tr>
+<tr><td><code>version</code></td><td>Returns the current world version (used internally for cache invalidation).</td></tr>
+<tr><td><code>entityCount</code></td><td>Number of alive entities.</td></tr>
+<tr><td><code>archetypeCount</code></td><td>Number of unique archetypes.</td></tr>
+</table>
+
+<hr>
+
+<!-- ─── ENTITIES ─── -->
+<h2 id="entities">Entities</h2>
+<p>An entity is a lightweight integer ID (<code>EntityID</code> is a typedef for <code>int</code>).</p>
+
+<h3 id="entity-create">Creating Entities</h3>
+<pre><span class="comment">// Create an empty entity (no components)</span>
+<span class="keyword">final</span> entity = world.<span class="func">createEntity</span>();
+
+<span class="comment">// Create an entity with components (immediate)</span>
+<span class="keyword">final</span> e = world.instant.<span class="func">createEntityWith</span>([
+  <span class="func">PositionComponent</span>(x: <span class="num">10</span>, y: <span class="num">20</span>),
+  <span class="func">VelocityComponent</span>(dx: <span class="num">0.5</span>, dy: <span class="num">1.0</span>),
+]);
+
+<span class="comment">// Bulk create multiple entities (immediate)</span>
+<span class="keyword">final</span> ids = world.instant.<span class="func">createEntities</span>([
+  [<span class="func">PositionComponent</span>(x: <span class="num">10</span>, y: <span class="num">20</span>), <span class="func">ColorComponent</span>(r: <span class="num">255</span>, g: <span class="num">0</span>, b: <span class="num">0</span>)],
+  [<span class="func">PositionComponent</span>(x: <span class="num">30</span>, y: <span class="num">40</span>)],
+]);
+
+<span class="comment">// Deferred creation (queued, applied at end of frame)</span>
+world.commands.<span class="func">createEntityWith</span>([<span class="func">PositionComponent</span>(x: <span class="num">5</span>, y: <span class="num">5</span>)]);
+world.commands.<span class="func">createEntities</span>([...]);</pre>
+
+<h3 id="entity-remove">Removing Entities</h3>
+<pre><span class="comment">// Immediate removal</span>
+world.instant.<span class="func">removeEntity</span>(entity);  <span class="comment">// returns true if alive</span>
+world.instant.<span class="func">removeEntities</span>([e1, e2, e3]);  <span class="comment">// batch removal (more efficient)</span>
+
+<span class="comment">// Deferred removal (queued, applied at end of frame)</span>
+world.commands.<span class="func">removeEntity</span>(entity);</pre>
+
+<h3 id="entity-status">Checking Status</h3>
+<pre><span class="keyword">if</span> (world.<span class="func">isAlive</span>(entity)) {
+  <span class="func">print</span>(<span class="string">"Entity is alive"</span>);
+}</pre>
+
+<hr>
+
+<!-- ─── COMPONENTS ─── -->
+<h2 id="components">Components</h2>
+<p>Components are plain data classes that extend <code>Component</code>. Each component stores an <code>entityID</code> that is set automatically when attached.</p>
+
+<h3 id="component-def">Defining Components</h3>
+<pre><span class="keyword">class</span> <span class="type">PositionComponent</span> <span class="keyword">extends</span> <span class="type">Component</span> {
+  <span class="func">PositionComponent</span>({<span class="keyword">required</span> <span class="keyword">this</span>.x, <span class="keyword">required</span> <span class="keyword">this</span>.y});
+
+  <span class="keyword">double</span> x;
+  <span class="keyword">double</span> y;
+}
+
+<span class="keyword">class</span> <span class="type">VelocityComponent</span> <span class="keyword">extends</span> <span class="type">Component</span> {
+  <span class="func">VelocityComponent</span>({<span class="keyword">required</span> <span class="keyword">this</span>.dx, <span class="keyword">required</span> <span class="keyword">this</span>.dy});
+
+  <span class="keyword">double</span> dx;
+  <span class="keyword">double</span> dy;
+}</pre>
+
+<h3 id="component-add">Adding Components</h3>
+<pre><span class="comment">// Immediate — single</span>
+world.instant.<span class="func">addComponent</span>(entity, <span class="func">PositionComponent</span>(x: <span class="num">150</span>, y: <span class="num">150</span>));
+
+<span class="comment">// Immediate — bulk</span>
+world.instant.<span class="func">addComponents</span>(entity, components: [
+  <span class="func">PositionComponent</span>(x: <span class="num">150</span>, y: <span class="num">150</span>),
+  <span class="func">VelocityComponent</span>(dx: <span class="num">-800</span>, dy: <span class="num">400</span>),
+]);
+
+<span class="comment">// Deferred</span>
+world.commands.<span class="func">addComponent</span>(entity, <span class="func">PositionComponent</span>(x: <span class="num">5</span>, y: <span class="num">5</span>));
+world.commands.<span class="func">addComponents</span>(entity, [<span class="func">PositionComponent</span>(x: <span class="num">5</span>, y: <span class="num">5</span>), ...]);</pre>
+
+<h3 id="component-get">Getting Components</h3>
+<pre><span class="keyword">final</span> pos = world.<span class="func">getComponent</span>&lt;<span class="type">PositionComponent</span>&gt;(entity);
+<span class="keyword">if</span> (pos != <span class="keyword">null</span>) {
+  <span class="func">print</span>(pos.x);
+}</pre>
+
+<h3 id="component-remove">Removing Components</h3>
+<pre><span class="comment">// Immediate — single</span>
+world.instant.<span class="func">removeComponent</span>&lt;<span class="type">PositionComponent</span>&gt;(entity);
+
+<span class="comment">// Immediate — bulk</span>
+world.instant.<span class="func">removeComponents</span>(entity, components: [<span class="type">PositionComponent</span>, <span class="type">VelocityComponent</span>]);
+
+<span class="comment">// Deferred</span>
+world.commands.<span class="func">removeComponent</span>(entity, <span class="type">PositionComponent</span>);
+world.commands.<span class="func">removeComponents</span>(entity, [<span class="type">PositionComponent</span>, <span class="type">VelocityComponent</span>]);</pre>
+
+<div class="note">
+<strong>Generic components</strong> are fully supported. Use the concrete generic type when querying:
+<pre style="margin-top:8px;">world.<span class="func">getComponent</span>&lt;<span class="type">TComponent</span>&lt;<span class="keyword">String</span>&gt;&gt;(entity);
+world.<span class="func">query</span>([<span class="type">TComponent</span>&lt;<span class="keyword">int</span>&gt;]);</pre>
+</div>
+
+<hr>
+
+<!-- ─── QUERIES ─── -->
+<h2 id="queries">Queries</h2>
+<p>TECS provides several query strategies. The recommended hot-path approach is <code>queryEach</code>.</p>
+
+<h3 id="query-simple">Simple Query (One-off)</h3>
+<pre><span class="keyword">final</span> results = world.<span class="func">query</span>([<span class="type">PositionComponent</span>, <span class="type">VelocityComponent</span>]);
+
+<span class="keyword">for</span> (<span class="keyword">final</span> row <span class="keyword">in</span> results) {
+  <span class="keyword">final</span> pos = row.<span class="func">get</span>&lt;<span class="type">PositionComponent</span>&gt;();
+  <span class="keyword">final</span> vel = row.<span class="func">get</span>&lt;<span class="type">VelocityComponent</span>&gt;();
+  pos.x += vel.dx;
+  pos.y += vel.dy;
+}</pre>
+
+<h3 id="query-cached">Cached Query (QueryParams)</h3>
+<p>Create <code>QueryParams</code> once and reuse. Component IDs and type indices are cached internally.</p>
+<pre><span class="keyword">final</span> params = <span class="func">QueryParams</span>([<span class="type">PositionComponent</span>, <span class="type">VelocityComponent</span>]);
+
+<span class="comment">// Inside update loop:</span>
+<span class="keyword">final</span> results = world.<span class="func">queryWithParams</span>(params);
+<span class="keyword">for</span> (<span class="keyword">final</span> row <span class="keyword">in</span> results) {
+  <span class="keyword">final</span> pos = row.<span class="func">get</span>&lt;<span class="type">PositionComponent</span>&gt;();
+  <span class="keyword">final</span> vel = row.<span class="func">get</span>&lt;<span class="type">VelocityComponent</span>&gt;();
+  pos.x += vel.dx;
+}</pre>
+
+<h3 id="query-each">Allocation-free Iteration (queryEach) <span class="tag">recommended</span></h3>
+<p>Uses a single <code>QueryRowView</code> instance. Zero allocations per frame on the hot path.
+<strong>Do not store the row reference</strong> — it is reused on every callback invocation.</p>
+<pre><span class="keyword">final</span> params = <span class="func">QueryParams</span>([<span class="type">PositionComponent</span>, <span class="type">VelocityComponent</span>]);
+
+world.<span class="func">queryEach</span>(params, (row) {
+  <span class="keyword">final</span> pos = row.<span class="func">get</span>&lt;<span class="type">PositionComponent</span>&gt;();
+  <span class="keyword">final</span> vel = row.<span class="func">get</span>&lt;<span class="type">VelocityComponent</span>&gt;();
+  pos.x += vel.dx;
+  pos.y += vel.dy;
+});</pre>
+
+<h3 id="query-pairs">Pair Iteration</h3>
+<p>Iterate over every combination of entities from two different query sets, or all unique pairs within the same set.</p>
+
+<h4>queryEachPairs (cross pairs)</h4>
+<pre><span class="keyword">final</span> aParams = <span class="func">QueryParams</span>([<span class="type">AComponent</span>]);
+<span class="keyword">final</span> bParams = <span class="func">QueryParams</span>([<span class="type">BComponent</span>]);
+
+world.<span class="func">queryEachPairs</span>(aParams, bParams, (a, b) {
+  <span class="comment">// a has AComponent, b has BComponent</span>
+  <span class="comment">// a.entity != b.entity is guaranteed</span>
+});</pre>
+
+<h4>queryEachPairsSelf (intra-set pairs)</h4>
+<pre>world.<span class="func">queryEachPairsSelf</span>(
+  <span class="func">QueryParams</span>([<span class="type">AComponent</span>]),
+  (a, b) {
+    <span class="comment">// Unique unordered pairs: n * (n - 1) / 2 total</span>
+    <span class="comment">// a.entity != b.entity is guaranteed</span>
+  },
+);</pre>
+
+<h3 id="query-raw">Raw Buffer &amp; Count</h3>
+<h4>queryRaw</h4>
+<p>Returns a flat <code>List&lt;Component&gt;</code> with components interleaved per entity.
+Useful for low-level access or serialisation.</p>
+<pre><span class="keyword">final</span> buffer = world.<span class="func">queryRaw</span>(<span class="func">QueryParams</span>([<span class="type">PositionComponent</span>, <span class="type">ColorComponent</span>]));
+<span class="comment">// buffer[0] = PositionComponent (entity 1)</span>
+<span class="comment">// buffer[1] = ColorComponent   (entity 1)</span>
+<span class="comment">// buffer[2] = PositionComponent (entity 2)</span>
+<span class="comment">// buffer[3] = ColorComponent   (entity 2)</span></pre>
+
+<h4>queryCount</h4>
+<pre><span class="keyword">int</span> count = world.<span class="func">queryCount</span>([<span class="type">PositionComponent</span>]);
+<span class="keyword">int</span> count2 = world.<span class="func">queryCountWithParams</span>(params);</pre>
+
+<hr>
+
+<!-- ─── SYSTEMS ─── -->
+<h2 id="systems">Systems</h2>
+<p>Systems contain the logic that operates on entities. Extend <code>System&lt;T&gt;</code> where <code>T</code> is the type of the argument passed to <code>update()</code>.</p>
+
+<h3 id="system-def">Defining Systems</h3>
+<pre><span class="keyword">class</span> <span class="type">MoveSystem</span> <span class="keyword">extends</span> <span class="type">System</span>&lt;<span class="keyword">double</span>&gt; {
+  <span class="keyword">final</span> params = <span class="func">QueryParams</span>([<span class="type">PositionComponent</span>, <span class="type">VelocityComponent</span>]);
+
+  <span class="meta">@override</span>
+  <span class="keyword">void</span> <span class="func">init</span>() {
+    <span class="comment">// Called once when the system is added to the world.</span>
+  }
+
+  <span class="meta">@override</span>
+  <span class="keyword">void</span> <span class="func">update</span>(<span class="keyword">double</span> deltaTime) {
+    world.<span class="func">queryEach</span>(params, (row) {
+      <span class="keyword">final</span> pos = row.<span class="func">get</span>&lt;<span class="type">PositionComponent</span>&gt;();
+      <span class="keyword">final</span> vel = row.<span class="func">get</span>&lt;<span class="type">VelocityComponent</span>&gt;();
+      pos.x += vel.dx * deltaTime;
+      pos.y += vel.dy * deltaTime;
+    });
+  }
+}</pre>
+
+<p>Systems can also accept record types (Dart 3+) for multiple arguments:</p>
+<pre><span class="keyword">class</span> <span class="type">RenderSystem</span> <span class="keyword">extends</span> <span class="type">System</span>&lt;<span class="type">({Canvas canvas, Size size})</span>&gt; {
+  <span class="meta">@override</span>
+  <span class="keyword">void</span> <span class="func">update</span>(args) {
+    <span class="keyword">final</span> canvas = args.canvas;
+    <span class="keyword">final</span> size = args.size;
+    <span class="comment">// ...</span>
+  }
+}</pre>
+
+<h3 id="system-tags">System Tags</h3>
+<p>Tags let you group systems and update them independently with different argument types.</p>
+<pre>world.<span class="func">addSystem</span>(<span class="func">MoveSystem</span>());               <span class="comment">// tag: "" (default)</span>
+world.<span class="func">addSystem</span>(<span class="func">CollisionSystem</span>());         <span class="comment">// tag: "" (default)</span>
+world.<span class="func">addSystem</span>(<span class="func">RenderSystem</span>(), tag: <span class="string">"render"</span>);</pre>
+
+<h3 id="system-update">Updating Systems</h3>
+<pre><span class="comment">// Game loop — runs default-tag systems, then applies commands</span>
+world.<span class="func">update</span>(deltaTime);
+
+<span class="comment">// Render loop — runs "render"-tag systems, then applies commands</span>
+world.<span class="func">update</span>((canvas: canvas, size: size), tag: <span class="string">"render"</span>);
+
+<span class="comment">// Run a system once without registering it</span>
+world.<span class="func">runSystemOnce</span>(<span class="func">MoveSystem</span>(), args: <span class="num">0.016</span>);</pre>
+
+<hr>
+
+<!-- ─── RESOURCES ─── -->
+<h2 id="resources">Resources</h2>
+<p>Resources are singleton objects attached to the world. Useful for shared state like input, timers, configuration, etc.</p>
+
+<pre><span class="keyword">class</span> <span class="type">GameTime</span> {
+  <span class="keyword">double</span> seconds = <span class="num">0</span>;
+}
+
+<span class="comment">// Add</span>
+world.<span class="func">addResource</span>(<span class="func">GameTime</span>());
+
+<span class="comment">// Get &amp; mutate</span>
+<span class="keyword">final</span> time = world.<span class="func">getResource</span>&lt;<span class="type">GameTime</span>&gt;()!;
+time.seconds += <span class="num">1</span>;
+
+<span class="comment">// Remove</span>
+world.<span class="func">removeResource</span>&lt;<span class="type">GameTime</span>&gt;();</pre>
+
+<h3>Resource Tags</h3>
+<p>Tags allow multiple instances of the same type without key collision:</p>
+<pre>world.<span class="func">addResource</span>(<span class="func">GameTime</span>(), tag: <span class="string">"menu"</span>);
+<span class="keyword">final</span> t = world.<span class="func">getResource</span>&lt;<span class="type">GameTime</span>&gt;(tag: <span class="string">"menu"</span>);
+world.<span class="func">removeResource</span>&lt;<span class="type">GameTime</span>&gt;(tag: <span class="string">"menu"</span>);</pre>
+
+<div class="note">
+<strong>Note:</strong> Adding a resource with the same type and tag replaces the old one.
+Generic types like <code>FooGeneric&lt;String&gt;</code> and <code>FooGeneric&lt;double&gt;</code> are distinct keys.
+</div>
+
+<hr>
+
+<!-- ─── COMMANDS vs INSTANT ─── -->
+<h2 id="commands">Commands vs Instant</h2>
+<p>TECS exposes two ways to mutate the world. Understanding the difference is critical for correctness.</p>
+
+<h3 id="commands-deferred">CommandBuffer — Deferred Changes <span class="badge badge-blue">world.commands.*</span></h3>
+<p>Commands are queued and applied later, either at the end of <code>world.update()</code> or when <code>world.applyCommands()</code> is called manually.</p>
+
+<div class="note">
+<strong>Use inside queries and systems.</strong> When iterating entities with <code>queryEach</code>,
+<code>queryEachPairs</code>, etc., you must use deferred commands — never <code>world.instant.*</code> —
+to avoid concurrent modification of the archetype storage.
+</div>
+
+<pre>world.<span class="func">queryEach</span>(
+  <span class="func">QueryParams</span>([<span class="type">HealthComponent</span>]),
+  (row) {
+    <span class="keyword">if</span> (row.<span class="func">get</span>&lt;<span class="type">HealthComponent</span>&gt;().health &lt;= <span class="num">0</span>) {
+      world.commands.<span class="func">removeEntity</span>(row.entity);       <span class="comment">// ✓ deferred</span>
+    }
+  },
+);
+
+world.<span class="func">applyCommands</span>();  <span class="comment">// now the entity is actually removed</span></pre>
+
+<table>
+<tr><th>Method</th><th>Description</th></tr>
+<tr><td><code>addComponent(entityID, component)</code></td><td>Queues component addition.</td></tr>
+<tr><td><code>removeComponent(entityID, componentType)</code></td><td>Queues component removal.</td></tr>
+<tr><td><code>addComponents(entityID, components)</code></td><td>Queues bulk addition.</td></tr>
+<tr><td><code>removeComponents(entityID, componentTypes)</code></td><td>Queues bulk removal.</td></tr>
+<tr><td><code>removeEntity(entityID)</code></td><td>Queues entity removal. Deduplicated.</td></tr>
+<tr><td><code>createEntityWith(list)</code></td><td>Queues entity creation.</td></tr>
+<tr><td><code>createEntities(list)</code></td><td>Queues bulk entity creation.</td></tr>
+</table>
+
+<p>The command buffer is smart about ordering:</p>
+<ul>
+  <li>Entities to remove are tracked in a set (deduplicated).</li>
+  <li>Any command targeting a removed entity is skipped during <code>apply()</code>.</li>
+  <li>Entities are created first, then all component mutations, then removals.</li>
+</ul>
+
+<h3 id="commands-instant">InstantChanges — Immediate Changes <span class="badge badge-green">world.instant.*</span></h3>
+<p>Changes take effect immediately. The archetype storage is modified on the spot.</p>
+
+<div class="warn">
+<strong>Never use inside query iteration.</strong> Calling <code>world.instant.*</code> while
+iterating with <code>queryEach</code>, <code>queryEachPairs</code>, etc. will corrupt the iteration
+because the archetype's component lists are structurally modified.
+</div>
+
+<table>
+<tr><th>Method</th><th>Description</th></tr>
+<tr><td><code>addComponent(entityID, component)</code></td><td>Adds a component immediately.</td></tr>
+<tr><td><code>addComponents(entityID, components)</code></td><td>Adds multiple components immediately.</td></tr>
+<tr><td><code>removeComponent&lt;T&gt;(entityID)</code></td><td>Removes a component by type immediately.</td></tr>
+<tr><td><code>removeComponents(entityID, componentTypes)</code></td><td>Removes multiple components immediately.</td></tr>
+<tr><td><code>removeEntity(entityID)</code></td><td>Removes entity immediately. Returns <code>false</code> if already dead.</td></tr>
+<tr><td><code>removeEntities(entityIDs)</code></td><td>Batch-removes entities (more efficient than individual calls).</td></tr>
+<tr><td><code>createEntityWith(components)</code></td><td>Creates entity with components immediately.</td></tr>
+<tr><td><code>createEntities(entitiesComponents)</code></td><td>Creates multiple entities immediately.</td></tr>
+</table>
+
+<h3 id="commands-when">When to Use Which</h3>
+
+<table>
+<tr><th>Situation</th><th>Use</th></tr>
+<tr><td>Inside <code>queryEach</code> / <code>queryEachPairs</code> / <code>queryEachPairsSelf</code></td><td><span class="badge badge-blue">world.commands.*</span></td></tr>
+<tr><td>Inside a System's <code>update()</code> (during iteration)</td><td><span class="badge badge-blue">world.commands.*</span></td></tr>
+<tr><td>Setup / initialisation (outside iteration)</td><td><span class="badge badge-green">world.instant.*</span></td></tr>
+<tr><td>After <code>world.update()</code> (post-frame) or between frames</td><td><span class="badge badge-green">world.instant.*</span></td></tr>
+<tr><td>When you need the change to be visible immediately</td><td><span class="badge badge-green">world.instant.*</span></td></tr>
+<tr><td>When you want changes to flush at frame boundary</td><td><span class="badge badge-blue">world.commands.*</span></td></tr>
+</table>
+
+<hr>
+
+<!-- ─── API REFERENCE ─── -->
+<h2 id="api">API Reference</h2>
+
+<h3>World</h3>
+<div class="method-grid">
+  <div class="method-card"><span class="name">World()</span><div class="desc">Creates a new empty world.</div></div>
+  <div class="method-card"><span class="name">isAlive(EntityID)</span><div class="desc">Returns whether the entity exists.</div></div>
+  <div class="method-card"><span class="name">createEntity()</span><div class="desc">Creates a new empty entity, returns its ID.</div></div>
+  <div class="method-card"><span class="name">getComponent&lt;T&gt;(EntityID)</span><div class="desc">Gets a component by type, or null.</div></div>
+  <div class="method-card"><span class="name">addResource(T, {tag})</span><div class="desc">Adds a resource singleton.</div></div>
+  <div class="method-card"><span class="name">getResource&lt;T&gt;(tag)</span><div class="desc">Gets a resource by type and optional tag.</div></div>
+  <div class="method-card"><span class="name">removeResource&lt;T&gt;(tag)</span><div class="desc">Removes and returns a resource, or null.</div></div>
+  <div class="method-card"><span class="name">addSystem(System, {tag})</span><div class="desc">Registers a system, calls init().</div></div>
+  <div class="method-card"><span class="name">runSystemOnce(System, args)</span><div class="desc">Runs a system once without registering.</div></div>
+  <div class="method-card"><span class="name">update(T args, {tag})</span><div class="desc">Runs matching systems, then applies commands.</div></div>
+  <div class="method-card"><span class="name">applyCommands()</span><div class="desc">Flushes the command buffer.</div></div>
+  <div class="method-card"><span class="name">clearAll()</span><div class="desc">Resets world completely.</div></div>
+  <div class="method-card"><span class="name">clearEntities()</span><div class="desc">Clears all entities &amp; archetypes.</div></div>
+  <div class="method-card"><span class="name">clearSystems()</span><div class="desc">Removes all systems.</div></div>
+  <div class="method-card"><span class="name">clearResources()</span><div class="desc">Removes all resources.</div></div>
+  <div class="method-card"><span class="name">componentID&lt;T&gt;()</span><div class="desc">Returns the internal numeric ID for a component type.</div></div>
+  <div class="method-card"><span class="name">findMatchingArchetypes(SetHash)</span><div class="desc">Finds all archetypes whose set contains the given hash.</div></div>
+</div>
+
+<h3>Queries</h3>
+<div class="method-grid">
+  <div class="method-card"><span class="name">query(List&lt;Type&gt;)</span><div class="desc">Returns List&lt;QueryRow&gt; for the given component types.</div></div>
+  <div class="method-card"><span class="name">queryWithParams(QueryParams)</span><div class="desc">Cached variant — uses pre-resolved QueryParams.</div></div>
+  <div class="method-card"><span class="name">queryEach(QueryParams, fn)</span><div class="desc">Allocation-free callback-based iteration.</div></div>
+  <div class="method-card"><span class="name">queryEachPairs(a, b, fn)</span><div class="desc">Cross-iteration over two query sets.</div></div>
+  <div class="method-card"><span class="name">queryEachPairsSelf(p, fn)</span><div class="desc">Unique unordered pairs within same set.</div></div>
+  <div class="method-card"><span class="name">queryRaw(QueryParams)</span><div class="desc">Returns flat List&lt;Component&gt; buffer.</div></div>
+  <div class="method-card"><span class="name">queryCount(List&lt;Type&gt;)</span><div class="desc">Counts entities matching the component set.</div></div>
+  <div class="method-card"><span class="name">queryCountWithParams(QueryParams)</span><div class="desc">Cached count variant.</div></div>
+</div>
+
+<h3>QueryParams</h3>
+<div class="method-grid">
+  <div class="method-card"><span class="name">QueryParams(List&lt;Type&gt;)</span><div class="desc">Creates cached query parameters. Builds type-index map.</div></div>
+  <div class="method-card"><span class="name">activate(World)</span><div class="desc">Resolves component IDs and validates all types exist. Returns false if any type is unregistered.</div></div>
+  <div class="method-card"><span class="name">isActivated</span><div class="desc">Whether the params have been resolved against a world.</div></div>
+  <div class="method-card"><span class="name">hash</span><div class="desc">The SetHash representing the component composition.</div></div>
+  <div class="method-card"><span class="name">componentIDs</span><div class="desc">Resolved numeric IDs for each component type.</div></div>
+</div>
+
+<h3>QueryRow / QueryRowView</h3>
+<div class="method-grid">
+  <div class="method-card"><span class="name">.entity</span><div class="desc">The EntityID this row represents.</div></div>
+  <div class="method-card"><span class="name">get&lt;T&gt;()</span><div class="desc">Retrieves a component by type from the current row.</div></div>
+</div>
+
+<h3>CommandBuffer</h3>
+<div class="method-grid">
+  <div class="method-card"><span class="name">addComponent(entityID, component)</span><div class="desc">Queue component addition.</div></div>
+  <div class="method-card"><span class="name">removeComponent(entityID, componentType)</span><div class="desc">Queue component removal.</div></div>
+  <div class="method-card"><span class="name">addComponents(entityID, components)</span><div class="desc">Queue bulk component addition.</div></div>
+  <div class="method-card"><span class="name">removeComponents(entityID, componentTypes)</span><div class="desc">Queue bulk component removal.</div></div>
+  <div class="method-card"><span class="name">removeEntity(entityID)</span><div class="desc">Queue entity removal.</div></div>
+  <div class="method-card"><span class="name">createEntityWith(components)</span><div class="desc">Queue entity creation.</div></div>
+  <div class="method-card"><span class="name">createEntities(entities)</span><div class="desc">Queue bulk entity creation.</div></div>
+  <div class="method-card"><span class="name">apply(World)</span><div class="desc">Execute all queued commands.</div></div>
+  <div class="method-card"><span class="name">clear()</span><div class="desc">Clear the buffer without applying.</div></div>
+  <div class="method-card"><span class="name">isEmpty</span><div class="desc">Whether the buffer has any pending commands.</div></div>
+  <div class="method-card"><span class="name">length</span><div class="desc">Total number of pending operations.</div></div>
+</div>
+
+<h3>InstantChanges (world.instant)</h3>
+<div class="method-grid">
+  <div class="method-card"><span class="name">addComponent(entityID, component)</span><div class="desc">Immediately add a component.</div></div>
+  <div class="method-card"><span class="name">addComponents(entityID, components)</span><div class="desc">Immediately add multiple components.</div></div>
+  <div class="method-card"><span class="name">removeComponent&lt;T&gt;(entityID)</span><div class="desc">Immediately remove a component by type.</div></div>
+  <div class="method-card"><span class="name">removeComponents(entityID, componentTypes)</span><div class="desc">Immediately remove multiple components.</div></div>
+  <div class="method-card"><span class="name">removeEntity(entityID)</span><div class="desc">Immediately remove an entity. Returns bool.</div></div>
+  <div class="method-card"><span class="name">removeEntities(entityIDs)</span><div class="desc">Immediately batch-remove entities.</div></div>
+  <div class="method-card"><span class="name">createEntityWith(components)</span><div class="desc">Immediately create entity with components.</div></div>
+  <div class="method-card"><span class="name">createEntities(entitiesComponents)</span><div class="desc">Immediately bulk-create entities.</div></div>
+</div>
+
+<h3>Types</h3>
+<table>
+<tr><th>Name</th><th>Definition</th><th>Description</th></tr>
+<tr><td><code>EntityID</code></td><td><code>int</code></td><td>Unique entity identifier.</td></tr>
+<tr><td><code>ComponentID</code></td><td><code>int</code></td><td>Internal numeric component type identifier.</td></tr>
+</table>
+
+<h3>Component</h3>
+<table>
+<tr><th>Member</th><th>Description</th></tr>
+<tr><td><code>entityID</code></td><td>The EntityID this component belongs to. Set automatically on attachment.</td></tr>
+</table>
+
+<h3>System&lt;T&gt;</h3>
+<table>
+<tr><th>Member</th><th>Description</th></tr>
+<tr><td><code>world</code></td><td>Reference to the World. Set by <code>addSystem()</code>.</td></tr>
+<tr><td><code>tag</code></td><td>The tag assigned by <code>addSystem()</code>.</td></tr>
+<tr><td><code>init()</code></td><td>Override for one-time setup when system is registered.</td></tr>
+<tr><td><code>update(T args)</code></td><td>Called every frame. Contains your system logic.</td></tr>
+</table>
+
+<hr>
+
+<p style="text-align:center;color:var(--text-dim);padding:32px 0 16px;">
+TECS — Tremble ECS · Built with Dart
+</p>
+
+</main>
+</body>
+</html>
