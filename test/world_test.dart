@@ -89,8 +89,8 @@ void main() {
     final entity1 = world.createEntity();
     final entity2 = world.createEntity();
 
-    world.addComponent(entity1, PositionComponent(x: 3, y: 4));
-    world.addComponent(entity2, PositionComponent(x: 3, y: 4));
+    world.instant.addComponent(entity1, PositionComponent(x: 3, y: 4));
+    world.instant.addComponent(entity2, PositionComponent(x: 3, y: 4));
 
     expect(world.archetypeCount, 1);
   });
@@ -102,12 +102,12 @@ void main() {
     final entity2 = world.createEntity();
     final entity3 = world.createEntity();
 
-    world.addComponent(entity1, PositionComponent(x: 3, y: 4));
+    world.instant.addComponent(entity1, PositionComponent(x: 3, y: 4));
 
-    world.addComponent(entity2, PositionComponent(x: 7, y: 8));
-    world.addComponent(entity2, ColorComponent(r: 9, g: 12, b: 111));
+    world.instant.addComponent(entity2, PositionComponent(x: 7, y: 8));
+    world.instant.addComponent(entity2, ColorComponent(r: 9, g: 12, b: 111));
 
-    world.addComponent(entity3, ColorComponent(r: 5, g: 6, b: 120));
+    world.instant.addComponent(entity3, ColorComponent(r: 5, g: 6, b: 120));
 
     final pos1 = world.getComponent<PositionComponent>(entity1);
     final color1Null = world.getComponent<ColorComponent>(entity1);
@@ -126,9 +126,9 @@ void main() {
 
     expect(color2.r + color2.g + color2.b, 132);
 
-    world.addComponent(entity1, ColorComponent(r: 65, g: 32, b: 49));
-    world.addComponent(entity2, NameComponent(name: "ent2"));
-    world.addComponent(entity1, NameComponent(name: "ent1"));
+    world.instant.addComponent(entity1, ColorComponent(r: 65, g: 32, b: 49));
+    world.instant.addComponent(entity2, NameComponent(name: "ent2"));
+    world.instant.addComponent(entity1, NameComponent(name: "ent1"));
 
     expect(color2.r + color2.g + color2.b, 132);
 
@@ -141,8 +141,8 @@ void main() {
     final world = World();
 
     final entity1 = world.createEntity();
-    world.addComponent(entity1, PositionComponent(x: 3, y: 4));
-    world.addComponents(entity1, [
+    world.instant.addComponent(entity1, PositionComponent(x: 3, y: 4));
+    world.instant.addComponents(entity1, [
       NameComponent(name: "ent1"),
       ColorComponent(r: 9, g: 12, b: 111),
     ]);
@@ -157,7 +157,7 @@ void main() {
     expect(name1!.name, "ent1");
 
     final entity2 = world.createEntity();
-    world.addComponents(entity2, [
+    world.instant.addComponents(entity2, [
       PositionComponent(x: 7, y: 8),
       ColorComponent(r: 9, g: 12, b: 111),
     ]);
@@ -179,22 +179,22 @@ void main() {
     final entity1 = world.createEntity();
     final entity2 = world.createEntity();
 
-    world.addComponent(entity1, PositionComponent(x: 3, y: 4));
+    world.instant.addComponent(entity1, PositionComponent(x: 3, y: 4));
 
-    world.addComponent(entity2, PositionComponent(x: 3, y: 4));
-    world.addComponent(entity2, ColorComponent(r: 3, g: 4, b: 100));
+    world.instant.addComponent(entity2, PositionComponent(x: 3, y: 4));
+    world.instant.addComponent(entity2, ColorComponent(r: 3, g: 4, b: 100));
 
     final color2 = world.getComponent<ColorComponent>(entity2);
     expect(color2, isNotNull);
     expect(color2!.b, 100);
 
-    world.removeComponent<ColorComponent>(entity2);
+    world.instant.removeComponent<ColorComponent>(entity2);
 
     final color2Null = world.getComponent<ColorComponent>(entity2);
     expect(color2Null, isNull);
 
-    world.removeComponent<PositionComponent>(entity1);
-    world.addComponent(entity1, NameComponent(name: "ent1"));
+    world.instant.removeComponent<PositionComponent>(entity1);
+    world.instant.addComponent(entity1, NameComponent(name: "ent1"));
 
     final pos1Null = world.getComponent<PositionComponent>(entity1);
     expect(pos1Null, isNull);
@@ -210,13 +210,13 @@ void main() {
     final entity1 = world.createEntity();
     final entity2 = world.createEntity();
 
-    world.addComponent(entity1, PositionComponent(x: 3, y: 4));
+    world.instant.addComponent(entity1, PositionComponent(x: 3, y: 4));
 
-    world.addComponent(entity2, PositionComponent(x: 3, y: 4));
-    world.addComponent(entity2, ColorComponent(r: 3, g: 4, b: 100));
-    world.addComponent(entity2, NameComponent(name: "ent2"));
+    world.instant.addComponent(entity2, PositionComponent(x: 3, y: 4));
+    world.instant.addComponent(entity2, ColorComponent(r: 3, g: 4, b: 100));
+    world.instant.addComponent(entity2, NameComponent(name: "ent2"));
 
-    world.removeComponents(entity2, components: [ColorComponent, NameComponent]);
+    world.instant.removeComponents(entity2, components: [ColorComponent, NameComponent]);
 
     final color2Null = world.getComponent<ColorComponent>(entity2);
     expect(color2Null, isNull);
@@ -235,24 +235,24 @@ void main() {
     final entity2 = world.createEntity();
     final entity3 = world.createEntity();
 
-    world.addComponent(entity1, PositionComponent(x: 3, y: 4));
+    world.instant.addComponent(entity1, PositionComponent(x: 3, y: 4));
 
-    world.addComponent(entity2, PositionComponent(x: 3, y: 4));
-    world.addComponent(entity2, ColorComponent(r: 3, g: 4, b: 100));
+    world.instant.addComponent(entity2, PositionComponent(x: 3, y: 4));
+    world.instant.addComponent(entity2, ColorComponent(r: 3, g: 4, b: 100));
 
-    world.addComponent(entity3, PositionComponent(x: 3, y: 4));
-    world.addComponent(entity3, ColorComponent(r: 3, g: 4, b: 100));
+    world.instant.addComponent(entity3, PositionComponent(x: 3, y: 4));
+    world.instant.addComponent(entity3, ColorComponent(r: 3, g: 4, b: 100));
 
     expect(world.archetypeCount, 2);
     expect(world.entityCount, 3);
 
     expect(world.isAlive(entity2), true);
-    expect(world.removeEntity(entity2), true);
+    expect(world.instant.removeEntity(entity2), true);
 
     expect(world.entityCount, 2);
 
     expect(world.isAlive(entity2), false);
-    expect(world.removeEntity(entity2), false);
+    expect(world.instant.removeEntity(entity2), false);
   });
 
   test('query raw - flat buffer format', () {
@@ -262,14 +262,14 @@ void main() {
     final entity2 = world.createEntity();
     final entity3 = world.createEntity();
 
-    world.addComponent(entity1, PositionComponent(x: 1, y: 2));
-    world.addComponent(entity1, NameComponent(name: "ent1"));
+    world.instant.addComponent(entity1, PositionComponent(x: 1, y: 2));
+    world.instant.addComponent(entity1, NameComponent(name: "ent1"));
 
-    world.addComponent(entity2, PositionComponent(x: 3, y: 4));
-    world.addComponent(entity2, ColorComponent(r: 10, g: 20, b: 100));
+    world.instant.addComponent(entity2, PositionComponent(x: 3, y: 4));
+    world.instant.addComponent(entity2, ColorComponent(r: 10, g: 20, b: 100));
 
-    world.addComponent(entity3, ColorComponent(r: 30, g: 40, b: 200));
-    world.addComponent(entity3, PositionComponent(x: 5, y: 6));
+    world.instant.addComponent(entity3, ColorComponent(r: 30, g: 40, b: 200));
+    world.instant.addComponent(entity3, PositionComponent(x: 5, y: 6));
 
     final params = QueryParams([ColorComponent, PositionComponent]);
     final queryResult = world.queryRaw(params);
@@ -296,11 +296,11 @@ void main() {
     final entity1 = world.createEntity();
     final entity2 = world.createEntity();
 
-    world.addComponent(entity1, PositionComponent(x: 3, y: 4));
-    world.addComponent(entity1, NameComponent(name: "ent1"));
+    world.instant.addComponent(entity1, PositionComponent(x: 3, y: 4));
+    world.instant.addComponent(entity1, NameComponent(name: "ent1"));
 
-    world.addComponent(entity2, ColorComponent(r: 3, g: 4, b: 100));
-    world.addComponent(entity2, PositionComponent(x: 3, y: 4));
+    world.instant.addComponent(entity2, ColorComponent(r: 3, g: 4, b: 100));
+    world.instant.addComponent(entity2, PositionComponent(x: 3, y: 4));
 
     final resultRows1 = world.query([ColorComponent, PositionComponent]);
     for (final row in resultRows1) {
@@ -322,20 +322,20 @@ void main() {
     final entity2 = world.createEntity();
     final entity3 = world.createEntity();
 
-    world.addComponent(entity1, PositionComponent(x: 3, y: 4));
+    world.instant.addComponent(entity1, PositionComponent(x: 3, y: 4));
 
-    world.addComponent(entity2, PositionComponent(x: 3, y: 4));
-    world.addComponent(entity2, ColorComponent(r: 3, g: 4, b: 100));
+    world.instant.addComponent(entity2, PositionComponent(x: 3, y: 4));
+    world.instant.addComponent(entity2, ColorComponent(r: 3, g: 4, b: 100));
 
-    world.addComponent(entity3, PositionComponent(x: 3, y: 4));
-    world.addComponent(entity3, ColorComponent(r: 3, g: 4, b: 100));
+    world.instant.addComponent(entity3, PositionComponent(x: 3, y: 4));
+    world.instant.addComponent(entity3, ColorComponent(r: 3, g: 4, b: 100));
 
     expect(world.queryCount([NameComponent]), 0);
     expect(world.queryCountWithParams(QueryParams([PositionComponent])), 3);
     expect(world.queryCountWithParams(QueryParams([ColorComponent])), 2);
     expect(world.queryCount([PositionComponent, ColorComponent]), 2);
 
-    world.removeEntity(entity2);
+    world.instant.removeEntity(entity2);
 
     expect(world.queryCount([PositionComponent]), 2);
     expect(world.queryCount([ColorComponent]), 1);
@@ -405,7 +405,7 @@ void main() {
       [PositionComponent(x: 50.0, y: 60.0), ColorComponent(r: 0, g: 0, b: 255)],
     ];
 
-    final entityIDs = world.createEntities(bulkComponents);
+    final entityIDs = world.instant.createEntities(bulkComponents);
 
     expect(entityIDs.length, 3, reason: "Should create 3 entities");
     expect(world.entityCount, 3, reason: "World should have 3 entities");
@@ -434,7 +434,7 @@ void main() {
       }
     }
 
-    world.addComponent(entityIDs[1], ColorComponent(r: 0, g: 255, b: 0));
+    world.instant.addComponent(entityIDs[1], ColorComponent(r: 0, g: 255, b: 0));
     final color = world.getComponent<ColorComponent>(entityIDs[1]);
     expect(color, isNotNull);
     expect(color!.r, 0);
@@ -446,14 +446,14 @@ void main() {
     final params = QueryParams([PositionComponent]);
 
     final e1 = world.createEntity();
-    world.addComponent(e1, PositionComponent(x: 1, y: 2));
+    world.instant.addComponent(e1, PositionComponent(x: 1, y: 2));
 
     final result1 = world.queryWithParams(params);
     expect(result1.length, 1);
 
     final e2 = world.createEntity();
-    world.addComponent(e2, PositionComponent(x: 3, y: 4));
-    world.addComponent(e2, ColorComponent(r: 1, g: 2, b: 3));
+    world.instant.addComponent(e2, PositionComponent(x: 3, y: 4));
+    world.instant.addComponent(e2, ColorComponent(r: 1, g: 2, b: 3));
 
     final result2 = world.queryWithParams(params);
     expect(result2.length, 2);
@@ -465,7 +465,7 @@ void main() {
 
     for (int i = 0; i < 5; i++) {
       final e = world.createEntity();
-      world.addComponent(e, PositionComponent(x: i.toDouble(), y: i.toDouble()));
+      world.instant.addComponent(e, PositionComponent(x: i.toDouble(), y: i.toDouble()));
     }
 
     final result1 = world.queryWithParams(params);
@@ -474,7 +474,7 @@ void main() {
     final result2 = world.queryWithParams(params);
     expect(result2.length, 5);
 
-    world.removeEntity(2);
+    world.instant.removeEntity(2);
     final result3 = world.queryWithParams(params);
     expect(result3.length, 4);
   });
@@ -484,14 +484,14 @@ void main() {
     final params = QueryParams([PositionComponent]);
 
     final e1 = world.createEntity();
-    world.addComponent(e1, PositionComponent(x: 1, y: 2));
+    world.instant.addComponent(e1, PositionComponent(x: 1, y: 2));
 
     expect(world.queryWithParams(params).length, 1);
 
     world.clearEntities();
 
     final e2 = world.createEntity();
-    world.addComponent(e2, PositionComponent(x: 5, y: 6));
+    world.instant.addComponent(e2, PositionComponent(x: 5, y: 6));
 
     final result = world.queryWithParams(params);
     expect(result.length, 1);
@@ -503,11 +503,11 @@ void main() {
     final params = QueryParams([PositionComponent, ColorComponent]);
 
     final e1 = world.createEntity();
-    world.addComponent(e1, PositionComponent(x: 1, y: 2));
+    world.instant.addComponent(e1, PositionComponent(x: 1, y: 2));
 
     expect(world.queryWithParams(params), isEmpty);
 
-    world.addComponent(e1, ColorComponent(r: 1, g: 2, b: 3));
+    world.instant.addComponent(e1, ColorComponent(r: 1, g: 2, b: 3));
 
     final result = world.queryWithParams(params);
     expect(result.length, 1);
@@ -519,14 +519,14 @@ void main() {
     final params = QueryParams([PositionComponent]);
 
     final e1 = world.createEntity();
-    world.addComponent(e1, PositionComponent(x: 1, y: 2));
+    world.instant.addComponent(e1, PositionComponent(x: 1, y: 2));
 
     final oldArchetypeCount = world.archetypeCount;
     expect(world.queryWithParams(params).length, 1);
 
     final e2 = world.createEntity();
-    world.addComponent(e2, PositionComponent(x: 3, y: 4));
-    world.addComponent(e2, ColorComponent(r: 1, g: 2, b: 3));
+    world.instant.addComponent(e2, PositionComponent(x: 3, y: 4));
+    world.instant.addComponent(e2, ColorComponent(r: 1, g: 2, b: 3));
 
     expect(world.archetypeCount, oldArchetypeCount + 1);
 
@@ -541,14 +541,14 @@ void main() {
     final params3 = QueryParams([PositionComponent, ColorComponent]);
 
     final e1 = world.createEntity();
-    world.addComponent(e1, PositionComponent(x: 1, y: 2));
+    world.instant.addComponent(e1, PositionComponent(x: 1, y: 2));
 
     final e2 = world.createEntity();
-    world.addComponent(e2, ColorComponent(r: 1, g: 2, b: 3));
+    world.instant.addComponent(e2, ColorComponent(r: 1, g: 2, b: 3));
 
     final e3 = world.createEntity();
-    world.addComponent(e3, PositionComponent(x: 4, y: 5));
-    world.addComponent(e3, ColorComponent(r: 4, g: 5, b: 6));
+    world.instant.addComponent(e3, PositionComponent(x: 4, y: 5));
+    world.instant.addComponent(e3, ColorComponent(r: 4, g: 5, b: 6));
 
     expect(world.queryWithParams(params1).length, 2); // e1, e3
     expect(world.queryWithParams(params2).length, 2); // e2, e3
@@ -559,9 +559,9 @@ void main() {
     final world = World();
 
     final e = world.createEntity();
-    world.addComponent(e, PositionComponent(x: 10, y: 20));
-    world.addComponent(e, VelocityComponent(dx: 1, dy: 2));
-    world.addComponent(e, ColorComponent(r: 255, g: 128, b: 64));
+    world.instant.addComponent(e, PositionComponent(x: 10, y: 20));
+    world.instant.addComponent(e, VelocityComponent(dx: 1, dy: 2));
+    world.instant.addComponent(e, ColorComponent(r: 255, g: 128, b: 64));
 
     final rows1 = world.query([PositionComponent, VelocityComponent, ColorComponent]);
     final row1 = rows1.first;
@@ -581,7 +581,7 @@ void main() {
 
     final entities = List.generate(10, (i) {
       final e = world.createEntity();
-      world.addComponent(e, PositionComponent(x: i.toDouble(), y: i.toDouble()));
+      world.instant.addComponent(e, PositionComponent(x: i.toDouble(), y: i.toDouble()));
       return e;
     });
 
@@ -598,14 +598,14 @@ void main() {
     final world = World();
 
     final e1 = world.createEntity();
-    world.addComponent(e1, PositionComponent(x: 1, y: 2));
-    world.addComponent(e1, VelocityComponent(dx: 0.1, dy: 0.2));
-    world.addComponent(e1, HealthComponent(health: 100));
+    world.instant.addComponent(e1, PositionComponent(x: 1, y: 2));
+    world.instant.addComponent(e1, VelocityComponent(dx: 0.1, dy: 0.2));
+    world.instant.addComponent(e1, HealthComponent(health: 100));
 
     final e2 = world.createEntity();
-    world.addComponent(e2, PositionComponent(x: 3, y: 4));
-    world.addComponent(e2, VelocityComponent(dx: 0.3, dy: 0.4));
-    world.addComponent(e2, HealthComponent(health: 50));
+    world.instant.addComponent(e2, PositionComponent(x: 3, y: 4));
+    world.instant.addComponent(e2, VelocityComponent(dx: 0.3, dy: 0.4));
+    world.instant.addComponent(e2, HealthComponent(health: 50));
 
     final rows = world.query([PositionComponent, VelocityComponent, HealthComponent]);
     expect(rows.length, 2);
@@ -629,7 +629,7 @@ void main() {
 
     for (int i = 0; i < 10; i++) {
       final e = world.createEntity();
-      world.addComponent(e, PositionComponent(x: i.toDouble(), y: i.toDouble()));
+      world.instant.addComponent(e, PositionComponent(x: i.toDouble(), y: i.toDouble()));
     }
 
     final r1 = world.queryWithParams(params);
@@ -650,11 +650,11 @@ void main() {
     final e2 = world.createEntity();
     final e3 = world.createEntity();
 
-    world.addComponent(e1, PositionComponent(x: 1, y: 1));
-    world.addComponent(e2, PositionComponent(x: 2, y: 2));
-    world.addComponent(e3, PositionComponent(x: 3, y: 3));
+    world.instant.addComponent(e1, PositionComponent(x: 1, y: 1));
+    world.instant.addComponent(e2, PositionComponent(x: 2, y: 2));
+    world.instant.addComponent(e3, PositionComponent(x: 3, y: 3));
 
-    world.removeEntity(e2);
+    world.instant.removeEntity(e2);
 
     final p1 = world.getComponent<PositionComponent>(e1);
     final p3 = world.getComponent<PositionComponent>(e3);
@@ -667,13 +667,13 @@ void main() {
     final world = World();
 
     final e = world.createEntity();
-    world.addComponent(e, PositionComponent(x: 1, y: 2));
-    world.addComponent(e, ColorComponent(r: 1, g: 1, b: 1));
+    world.instant.addComponent(e, PositionComponent(x: 1, y: 2));
+    world.instant.addComponent(e, ColorComponent(r: 1, g: 1, b: 1));
 
-    world.removeComponent<ColorComponent>(e);
+    world.instant.removeComponent<ColorComponent>(e);
     expect(world.getComponent<ColorComponent>(e), isNull);
 
-    world.addComponent(e, ColorComponent(r: 5, g: 6, b: 7));
+    world.instant.addComponent(e, ColorComponent(r: 5, g: 6, b: 7));
 
     final row = world.query([PositionComponent, ColorComponent]).single;
     expect(row.get<ColorComponent>().b, 7);
@@ -683,8 +683,8 @@ void main() {
     final world = World();
 
     final e = world.createEntity();
-    world.addComponent(e, PositionComponent(x: 1, y: 1));
-    world.addComponent(e, ColorComponent(r: 1, g: 1, b: 1));
+    world.instant.addComponent(e, PositionComponent(x: 1, y: 1));
+    world.instant.addComponent(e, ColorComponent(r: 1, g: 1, b: 1));
 
     final rows = world.query([PositionComponent, ColorComponent]);
     for (final row in rows) {
@@ -697,7 +697,7 @@ void main() {
     final world = World();
 
     final e = world.createEntity();
-    world.addComponent(e, PositionComponent(x: 1, y: 2));
+    world.instant.addComponent(e, PositionComponent(x: 1, y: 2));
 
     final result = world.query([ColorComponent]);
     expect(result, isEmpty);
@@ -707,7 +707,7 @@ void main() {
     final world = World();
 
     final e = world.createEntity();
-    world.addComponent(e, PositionComponent(x: 1, y: 2));
+    world.instant.addComponent(e, PositionComponent(x: 1, y: 2));
 
     final result = world.query([NameComponent, ColorComponent]);
     expect(result, isEmpty);
@@ -719,8 +719,8 @@ void main() {
 
     for (int i = 0; i < 1000; i++) {
       final e = world.createEntity();
-      world.addComponent(e, PositionComponent(x: i.toDouble(), y: i.toDouble()));
-      world.addComponent(e, VelocityComponent(dx: 0.1, dy: 0.2));
+      world.instant.addComponent(e, PositionComponent(x: i.toDouble(), y: i.toDouble()));
+      world.instant.addComponent(e, VelocityComponent(dx: 0.1, dy: 0.2));
     }
 
     final stopwatch1 = Stopwatch()..start();
@@ -742,14 +742,14 @@ void main() {
     final world = World();
     final params = QueryParams([PositionComponent]);
     final e1 = world.createEntity();
-    world.addComponent(e1, PositionComponent(x: 1, y: 2));
+    world.instant.addComponent(e1, PositionComponent(x: 1, y: 2));
     final archetypeCount1 = world.archetypeCount;
 
     final result1 = world.queryWithParams(params);
     expect(result1.length, 1);
 
     final e2 = world.createEntity();
-    world.addComponents(e2, [
+    world.instant.addComponents(e2, [
       PositionComponent(x: 3, y: 4),
       ColorComponent(r: 1, g: 2, b: 3),
       VelocityComponent(dx: 0.5, dy: 0.6),
@@ -764,7 +764,7 @@ void main() {
     final world = World();
     for (int i = 0; i < 5; i++) {
       final e = world.createEntity();
-      world.addComponent(e, PositionComponent(x: i.toDouble(), y: i.toDouble()));
+      world.instant.addComponent(e, PositionComponent(x: i.toDouble(), y: i.toDouble()));
     }
 
     final rows = world.query([PositionComponent]);
@@ -777,12 +777,12 @@ void main() {
   test('query raw should return flat buffer in correct order', () {
     final world = World();
     final e1 = world.createEntity();
-    world.addComponent(e1, PositionComponent(x: 1, y: 2));
-    world.addComponent(e1, ColorComponent(r: 10, g: 20, b: 30));
+    world.instant.addComponent(e1, PositionComponent(x: 1, y: 2));
+    world.instant.addComponent(e1, ColorComponent(r: 10, g: 20, b: 30));
 
     final e2 = world.createEntity();
-    world.addComponent(e2, PositionComponent(x: 3, y: 4));
-    world.addComponent(e2, ColorComponent(r: 40, g: 50, b: 60));
+    world.instant.addComponent(e2, PositionComponent(x: 3, y: 4));
+    world.instant.addComponent(e2, ColorComponent(r: 40, g: 50, b: 60));
 
     final params = QueryParams([PositionComponent, ColorComponent]);
     final buffer = world.queryRaw(params);
@@ -796,9 +796,9 @@ void main() {
   test('component order in query should not affect results', () {
     final world = World();
     final e = world.createEntity();
-    world.addComponent(e, PositionComponent(x: 1, y: 2));
-    world.addComponent(e, ColorComponent(r: 3, g: 4, b: 5));
-    world.addComponent(e, VelocityComponent(dx: 6, dy: 7));
+    world.instant.addComponent(e, PositionComponent(x: 1, y: 2));
+    world.instant.addComponent(e, ColorComponent(r: 3, g: 4, b: 5));
+    world.instant.addComponent(e, VelocityComponent(dx: 6, dy: 7));
 
     final rows1 = world.query([PositionComponent, ColorComponent, VelocityComponent]);
     final rows2 = world.query([VelocityComponent, PositionComponent, ColorComponent]);
@@ -822,7 +822,7 @@ void main() {
 
     for (int i = 0; i < 5; i++) {
       final e = world.createEntity();
-      world.addComponent(e, PositionComponent(x: i.toDouble(), y: i.toDouble()));
+      world.instant.addComponent(e, PositionComponent(x: i.toDouble(), y: i.toDouble()));
     }
 
     int count = 0;
@@ -842,13 +842,13 @@ void main() {
     final world = World();
 
     final e1 = world.createEntity();
-    world.addComponents(e1, [
+    world.instant.addComponents(e1, [
       PositionComponent(x: 1, y: 2),
       VelocityComponent(dx: 0.1, dy: 0.2),
     ]);
 
     final e2 = world.createEntity();
-    world.addComponents(e2, [
+    world.instant.addComponents(e2, [
       PositionComponent(x: 3, y: 4),
       VelocityComponent(dx: 0.3, dy: 0.4),
     ]);
@@ -877,7 +877,7 @@ void main() {
 
     for (int i = 0; i < 3; i++) {
       final e = world.createEntity();
-      world.addComponent(e, PositionComponent(x: i.toDouble(), y: 0));
+      world.instant.addComponent(e, PositionComponent(x: i.toDouble(), y: 0));
     }
 
     QueryRowView? firstRow;
@@ -898,7 +898,7 @@ void main() {
     for (int i = 0; i < 4; i++) {
       final e = world.createEntity();
       entities.add(e);
-      world.addComponent(e, PositionComponent(x: i.toDouble(), y: 0));
+      world.instant.addComponent(e, PositionComponent(x: i.toDouble(), y: 0));
     }
 
     int index = 0;
@@ -917,16 +917,16 @@ void main() {
     final world = World();
 
     final a1 = world.createEntity();
-    world.addComponent(a1, AComponent());
+    world.instant.addComponent(a1, AComponent());
 
     final a2 = world.createEntity();
-    world.addComponent(a2, AComponent());
+    world.instant.addComponent(a2, AComponent());
 
     final b1 = world.createEntity();
-    world.addComponent(b1, BComponent());
+    world.instant.addComponent(b1, BComponent());
 
     final b2 = world.createEntity();
-    world.addComponent(b2, BComponent());
+    world.instant.addComponent(b2, BComponent());
 
     final aParams = QueryParams([AComponent]);
     final bParams = QueryParams([BComponent]);
@@ -952,8 +952,8 @@ void main() {
     final world = World();
 
     final e = world.createEntity();
-    world.addComponent(e, AComponent());
-    world.addComponent(e, BComponent());
+    world.instant.addComponent(e, AComponent());
+    world.instant.addComponent(e, BComponent());
 
     world.queryEachPairs(
       QueryParams([AComponent]),
@@ -969,10 +969,10 @@ void main() {
 
     for (int i = 0; i < 3; i++) {
       final a = world.createEntity();
-      world.addComponent(a, AComponent());
+      world.instant.addComponent(a, AComponent());
 
       final b = world.createEntity();
-      world.addComponent(b, BComponent());
+      world.instant.addComponent(b, BComponent());
     }
 
     final aInstances = <QueryRowView>{};
@@ -998,7 +998,7 @@ void main() {
     final entities = <EntityID>[];
     for (int i = 0; i < 4; i++) {
       final e = world.createEntity();
-      world.addComponent(e, AComponent());
+      world.instant.addComponent(e, AComponent());
       entities.add(e);
     }
 
@@ -1023,7 +1023,7 @@ void main() {
 
     for (int i = 0; i < 3; i++) {
       final e = world.createEntity();
-      world.addComponent(e, AComponent());
+      world.instant.addComponent(e, AComponent());
     }
 
     world.queryEachPairsSelf(
@@ -1039,7 +1039,7 @@ void main() {
 
     for (int i = 0; i < 4; i++) {
       final e = world.createEntity();
-      world.addComponent(e, AComponent());
+      world.instant.addComponent(e, AComponent());
     }
 
     final instances = <QueryRowView>{};
@@ -1060,10 +1060,10 @@ void main() {
     final world = World();
 
     final e = world.createEntity();
-    world.addComponent(e, HealthComponent(health: 0));
+    world.instant.addComponent(e, HealthComponent(health: 0));
 
     final e2 = world.createEntity();
-    world.addComponents(e2, [HealthComponent(health: 1), AComponent()]);
+    world.instant.addComponents(e2, [HealthComponent(health: 1), AComponent()]);
 
     world.queryEach(
       QueryParams([HealthComponent]),
@@ -1080,7 +1080,7 @@ void main() {
     expect(world.isAlive(e), isTrue);
     expect(world.getComponent<AComponent>(e2), isNotNull);
 
-    world.flushCommands();
+    world.applyCommands();
 
     expect(world.isAlive(e), isFalse);
     expect(world.getComponent<AComponent>(e2), isNull);
@@ -1090,7 +1090,7 @@ void main() {
     final world = World();
 
     final e = world.createEntity();
-    world.addComponent(e, PositionComponent(x: 0, y: 0));
+    world.instant.addComponent(e, PositionComponent(x: 0, y: 0));
 
     world.commands.addComponent(e, VelocityComponent(dx: 1, dy: 1));
     world.commands.removeEntity(e);
@@ -1099,7 +1099,7 @@ void main() {
 
     expect(world.commands.length, 2);
 
-    world.flushCommands();
+    world.applyCommands();
 
     expect(world.isAlive(e), false);
   });
@@ -1109,11 +1109,11 @@ void main() {
 
     final e = world.createEntity();
 
-    world.addComponent(e, PositionComponent(x: 1, y: 2));
+    world.instant.addComponent(e, PositionComponent(x: 1, y: 2));
     world.commands.addComponent(e, VelocityComponent(dx: 1, dy: 1));
     world.commands.removeEntity(e);
 
-    world.flushCommands();
+    world.applyCommands();
 
     expect(world.isAlive(e), false);
   });
@@ -1123,13 +1123,13 @@ void main() {
 
     final e = world.createEntity();
     expect(world.isAlive(e), true);
-    expect(world.removeEntity(e), true);
-    expect(world.removeEntity(e), false);
+    expect(world.instant.removeEntity(e), true);
+    expect(world.instant.removeEntity(e), false);
     expect(world.isAlive(e), false);
 
     final e2 = world.createEntity();
     expect(world.isAlive(e2), true);
-    world.removeEntities([e2]);
+    world.instant.removeEntities([e2]);
     expect(world.isAlive(e2), false);
   });
 
@@ -1139,13 +1139,13 @@ void main() {
     final entities = <EntityID>[];
     for (int i = 0; i < 10; i++) {
       final e = world.createEntity();
-      world.addComponent(e, PositionComponent(x: i.toDouble(), y: 0));
+      world.instant.addComponent(e, PositionComponent(x: i.toDouble(), y: 0));
       entities.add(e);
     }
 
     expect(world.entityCount, 10);
 
-    world.removeEntities(entities);
+    world.instant.removeEntities(entities);
 
     expect(world.entityCount, 0);
   });
@@ -1158,7 +1158,7 @@ void main() {
 
     for (int i = 0; i < 10; i++) {
       final e = world.createEntity();
-      world.addComponent(e, PositionComponent(x: i.toDouble(), y: 0));
+      world.instant.addComponent(e, PositionComponent(x: i.toDouble(), y: 0));
       if (i.isEven) {
         remove.add(e);
       } else {
@@ -1166,7 +1166,7 @@ void main() {
       }
     }
 
-    world.removeEntities(remove);
+    world.instant.removeEntities(remove);
 
     expect(world.entityCount, keep.length);
 
@@ -1181,12 +1181,12 @@ void main() {
     final entities = <EntityID>[];
     for (int i = 0; i < 5; i++) {
       final e = world.createEntity();
-      world.addComponent(e, PositionComponent(x: i.toDouble(), y: 0));
+      world.instant.addComponent(e, PositionComponent(x: i.toDouble(), y: 0));
       entities.add(e);
     }
 
     // remove middle entity
-    world.removeEntities([entities[2]]);
+    world.instant.removeEntities([entities[2]]);
 
     final rows = world.query([PositionComponent]);
     expect(rows.length, 4);
@@ -1202,16 +1202,16 @@ void main() {
     final world = World();
 
     final e1 = world.createEntity();
-    world.addComponent(e1, PositionComponent(x: 1, y: 1));
+    world.instant.addComponent(e1, PositionComponent(x: 1, y: 1));
 
     final e2 = world.createEntity();
-    world.addComponent(e2, PositionComponent(x: 2, y: 2));
-    world.addComponent(e2, VelocityComponent(dx: 1, dy: 1));
+    world.instant.addComponent(e2, PositionComponent(x: 2, y: 2));
+    world.instant.addComponent(e2, VelocityComponent(dx: 1, dy: 1));
 
     final e3 = world.createEntity();
-    world.addComponent(e3, PositionComponent(x: 3, y: 3));
+    world.instant.addComponent(e3, PositionComponent(x: 3, y: 3));
 
-    world.removeEntities([e1, e2]);
+    world.instant.removeEntities([e1, e2]);
 
     expect(world.isAlive(e1), isFalse);
     expect(world.isAlive(e2), isFalse);
@@ -1227,13 +1227,13 @@ void main() {
 
     for (int i = 0; i < entityCount; i++) {
       final e = world1.createEntity();
-      world1.addComponent(e, PositionComponent(x: i.toDouble(), y: 0));
+      world1.instant.addComponent(e, PositionComponent(x: i.toDouble(), y: 0));
       entities1.add(e);
     }
 
     final sw1 = Stopwatch()..start();
     for (final e in entities1) {
-      world1.removeEntity(e);
+      world1.instant.removeEntity(e);
     }
     sw1.stop();
 
@@ -1243,12 +1243,12 @@ void main() {
 
     for (int i = 0; i < entityCount; i++) {
       final e = world2.createEntity();
-      world2.addComponent(e, PositionComponent(x: i.toDouble(), y: 0));
+      world2.instant.addComponent(e, PositionComponent(x: i.toDouble(), y: 0));
       entities2.add(e);
     }
 
     final sw2 = Stopwatch()..start();
-    world2.removeEntities(entities2);
+    world2.instant.removeEntities(entities2);
     sw2.stop();
 
     print('Individual remove: ${sw1.elapsedMilliseconds} ms');
@@ -1258,7 +1258,7 @@ void main() {
   test('creates entity with single component', () {
     final world = World();
 
-    final e = world.createEntityWith([
+    final e = world.instant.createEntityWith([
       PositionComponent(x: 1, y: 2),
     ]);
 
@@ -1274,7 +1274,7 @@ void main() {
   test('creates entity with multiple components', () {
     final world = World();
 
-    final e = world.createEntityWith([
+    final e = world.instant.createEntityWith([
       PositionComponent(x: 1, y: 2),
       VelocityComponent(dx: 0.1, dy: 0.2),
       HealthComponent(health: 100),
@@ -1296,12 +1296,12 @@ void main() {
   test('multiple entities created with same component set do not overwrite each other', () {
     final world = World();
 
-    final e1 = world.createEntityWith([
+    final e1 = world.instant.createEntityWith([
       PositionComponent(x: 1, y: 1),
       VelocityComponent(dx: 1, dy: 1),
     ]);
 
-    final e2 = world.createEntityWith([
+    final e2 = world.instant.createEntityWith([
       PositionComponent(x: 2, y: 2),
       VelocityComponent(dx: 2, dy: 2),
     ]);
@@ -1318,7 +1318,7 @@ void main() {
   test('query sees entity created with createEntityWith', () {
     final world = World();
 
-    final e = world.createEntityWith([
+    final e = world.instant.createEntityWith([
       PositionComponent(x: 10, y: 20),
     ]);
 
@@ -1332,7 +1332,7 @@ void main() {
     final world = World();
 
     for (int i = 0; i < 10; i++) {
-      world.createEntityWith([
+      world.instant.createEntityWith([
         PositionComponent(x: i.toDouble(), y: 0),
       ]);
     }
@@ -1350,10 +1350,10 @@ void main() {
 
     final entities = List.generate(3, (_) => world.createEntity());
 
-    world.addComponent(entities[0], TComponent<String>("this is a string"));
-    world.addComponent(entities[1], TComponent<double>(3.14159));
+    world.instant.addComponent(entities[0], TComponent<String>("this is a string"));
+    world.instant.addComponent(entities[1], TComponent<double>(3.14159));
 
-    world.addComponents(entities[2], [TComponent<int>(2), TComponent<bool>(true)]);
+    world.instant.addComponents(entities[2], [TComponent<int>(2), TComponent<bool>(true)]);
 
     final tFailGeneric = world.getComponent<TComponent>(entities[0]);
     expect(tFailGeneric, isNull);
@@ -1376,7 +1376,7 @@ void main() {
     world.commands.createEntityWith([TComponent<double>(1.1), TComponent<bool>(false)]);
     world.commands
         .addComponents(world.createEntity(), [TComponent<String>("hey"), TComponent<bool>(false)]);
-    world.commands.flush(world);
+    world.commands.apply(world);
 
     expect(world.queryCount([TComponent]), 0);
     expect(world.queryCount([TComponent<String>]), 2);

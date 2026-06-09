@@ -1,3 +1,9 @@
+## 1.0.2
+
+* ``runSystemOnce`` added to ``World``.
+* Instant world state changes moved to ``world.instant.{functionName}`` namespace for clarity.
+* ``world.clear()`` renamed to ``world.clearAll()``.
+
 ## 1.0.11
 
 * ``createEntities`` added to ``CommandBuffer``.

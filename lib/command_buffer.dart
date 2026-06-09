@@ -81,33 +81,33 @@ class CommandBuffer {
     _commands.add(_Command.removeComponents(e, c));
   }
 
-  void flush(World world) {
+  void apply(World world) {
     if (isEmpty) return;
 
     for (final components in _createEntities) {
-      world.createEntityWith(components);
+      world.instant.createEntityWith(components);
     }
 
     for (final cmd in _commands) {
       if (_removeCount > 0 && _removedEntities.contains(cmd.entity)) continue;
       switch (cmd) {
         case _AddComponent(component: final component):
-          world.addComponent(cmd.entity, component);
+          world.instant.addComponent(cmd.entity, component);
           break;
         case _RemoveComponent(componentType: final componentType):
-          world.removeComponentByType(cmd.entity, componentType);
+          world.instant.removeComponentByType(cmd.entity, componentType);
           break;
         case _AddComponents(components: final components):
-          world.addComponents(cmd.entity, components);
+          world.instant.addComponents(cmd.entity, components);
           break;
         case _RemoveComponents(componentTypes: final componentTypes):
-          world.removeComponents(cmd.entity, components: componentTypes);
+          world.instant.removeComponents(cmd.entity, components: componentTypes);
           break;
       }
     }
 
     if (_removeCount != 0) {
-      world.removeEntities(_removedEntities);
+      world.instant.removeEntities(_removedEntities);
     }
 
     clear();

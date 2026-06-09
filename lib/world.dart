@@ -13,6 +13,9 @@ class World {
 
   final _systems = <String, List<System>>{};
 
+  final CommandBuffer commands = CommandBuffer();
+  late final InstantChanges instant;
+
   int _componentCounter = 0;
   int _entityCounter = 0;
   int _version = 0;
@@ -22,9 +25,15 @@ class World {
   int get entityCount => _entityIndex.length;
   int get componentTypesCount => _componentTypes.length;
 
-  final CommandBuffer commands = CommandBuffer();
+  World() {
+    instant = InstantChanges(this);
+  }
 
-  void flushCommands() => commands.flush(this);
+  @pragma('vm:prefer-inline')
+  bool isAlive(EntityID entityID) => _entityIndex.containsKey(entityID);
+
+  @pragma('vm:prefer-inline')
+  void applyCommands() => commands.apply(this);
 
   void clearEntities() {
     commands.clear();
@@ -37,25 +46,16 @@ class World {
     _version++;
   }
 
-  void clearResources() => _resources.clear();
-  void clearSystems() => _systems.clear();
-
-  void clear() {
+  void clearAll() {
     clearSystems();
     clearEntities();
     clearResources();
   }
 
-  ComponentID? componentID<T extends Component>() {
-    return _componentTypes[T];
-  }
-
-  ComponentID? getComponentID(Type type) {
-    return _componentTypes[type];
-  }
-
-  int componentColumn(ComponentID id, SetHash hash) {
-    return _componentIndex[id]![hash]!;
+  EntityID createEntity() {
+    final entityID = _entityCounter++;
+    _entityIndex[entityID] = null;
+    return entityID;
   }
 
   List<Archetype> findMatchingArchetypes(SetHash hash) {
@@ -68,6 +68,8 @@ class World {
     return result;
   }
 
+  // --- Components ---
+
   T? getComponent<T extends Component>(EntityID entityID) {
     final componentID = _componentTypes[T];
     final record = _entityIndex[entityID];
@@ -79,6 +81,17 @@ class World {
     return archetype.components[componentRow][record.entityRow] as T?;
   }
 
+  @pragma('vm:prefer-inline')
+  ComponentID? componentID<T extends Component>() => _componentTypes[T];
+
+  @pragma('vm:prefer-inline')
+  ComponentID? getComponentID(Type type) => _componentTypes[type];
+
+  @pragma('vm:prefer-inline')
+  int componentColumn(ComponentID id, SetHash hash) => _componentIndex[id]![hash]!;
+
+  // --- Systems ---
+
   void addSystem(System system, {String tag = ""}) {
     system.world = this;
     system.tag = tag;
@@ -87,354 +100,40 @@ class World {
     system.init();
   }
 
+  void runSystemOnce<T>(System system, {required T args}) {
+    system.world = this;
+    system.init();
+    system.update(args);
+  }
+
   void update<T>(T args, {String tag = ""}) {
     final systems = _systems[tag];
-    if (systems == null) return;
-    for (final system in systems) {
-      system.update(args);
+    if (systems != null) {
+      for (final system in systems) {
+        system.update(args);
+      }
     }
-  }
-
-  T addResource<T>(T resource, {String tag = ""}) {
-    return _resources["$T|$tag"] = resource;
-  }
-
-  T? getResource<T>({String tag = ""}) {
-    return _resources["$T|$tag"] as T?;
-  }
-
-  T? removeResource<T>({String tag = ""}) {
-    return _resources.remove("$T|$tag") as T?;
-  }
-
-  EntityID createEntity() {
-    final entityID = _entityCounter++;
-    _entityIndex[entityID] = null;
-    return entityID;
-  }
-
-  bool removeEntity(EntityID entityID) {
-    if (!isAlive(entityID)) return false;
-    final record = _entityIndex[entityID];
-    if (record == null) {
-      _entityIndex.remove(entityID);
-      return true;
-    }
-    _removeEntityFromArchetype(entityID, record.archetype, record.entityRow);
-    return true;
+    applyCommands();
   }
 
   @pragma('vm:prefer-inline')
-  bool isAlive(EntityID entityID) => _entityIndex.containsKey(entityID);
+  void clearSystems() => _systems.clear();
 
-  ComponentID _getOrCreateComponentID(Type type) {
-    final id = _componentTypes[type];
-    if (id != null) return id;
-    _componentTypes[type] = _componentCounter;
-    _componentCounter++;
-    return _componentTypes[type]!;
-  }
+  // --- Resources ---
 
-  Archetype _getOrCreateArchetype(SetHash setHash) {
-    Archetype? archetype = _archetypeIndex[setHash];
-    if (archetype != null) return archetype;
-    archetype = Archetype(
-      setHash: setHash,
-      components: [],
-    );
+  @pragma('vm:prefer-inline')
+  T addResource<T>(T resource, {String tag = ""}) => _resources["$T|$tag"] = resource;
 
-    _archetypeIndex[setHash] = archetype;
-    return archetype;
-  }
+  @pragma('vm:prefer-inline')
+  T? getResource<T>({String tag = ""}) => _resources["$T|$tag"] as T?;
 
-  void removeEntities(Iterable<EntityID> entities) {
-    final Map<Archetype, List<int>> rows = {};
+  @pragma('vm:prefer-inline')
+  T? removeResource<T>({String tag = ""}) => _resources.remove("$T|$tag") as T?;
 
-    for (final e in entities) {
-      final record = _entityIndex.remove(e);
-      if (record == null) continue;
-      rows.putIfAbsent(record.archetype, () => []).add(record.entityRow);
-    }
+  @pragma('vm:prefer-inline')
+  void clearResources() => _resources.clear();
 
-    for (final entry in rows.entries) {
-      final archetype = entry.key;
-      final rowsToRemove = entry.value..sort((a, b) => b.compareTo(a));
-
-      for (final row in rowsToRemove) {
-        for (final column in archetype.components) {
-          column.removeAt(row);
-        }
-      }
-
-      for (int i = 0; i < archetype.components[0].length; i++) {
-        final eid = archetype.components[0][i].entityID;
-        if (eid != -1) {
-          _entityIndex[eid]!.entityRow = i;
-        }
-      }
-    }
-  }
-
-  void _removeEntityFromArchetype(
-    EntityID entityID,
-    Archetype fromArchetype,
-    int entityRow,
-  ) {
-    bool recordsFixed = false;
-    for (final compsOfEntity in fromArchetype.components) {
-      if (!recordsFixed) {
-        recordsFixed = true;
-        final compsAfter = compsOfEntity.sublist(entityRow + 1);
-        for (final compToDecrease in compsAfter) {
-          if (compToDecrease.entityID != -1) _entityIndex[compToDecrease.entityID]?.entityRow -= 1;
-        }
-      }
-      compsOfEntity.removeAt(entityRow);
-    }
-
-    _entityIndex.remove(entityID);
-  }
-
-  void _moveEntity(
-    EntityID entityID,
-    Archetype fromArchetype,
-    int entityRow,
-    Archetype toArchetype, {
-    List<Component> toAdd = const [],
-    Set<ComponentID> toRemove = const {},
-  }) {
-    bool recordsFixed = false;
-    final removedComps = <Component>[];
-    for (final compsOfEntity in fromArchetype.components) {
-      if (!recordsFixed) {
-        recordsFixed = true;
-        final compsAfter = compsOfEntity.sublist(entityRow + 1);
-        for (final compToDecrease in compsAfter) {
-          if (compToDecrease.entityID != -1) _entityIndex[compToDecrease.entityID]?.entityRow -= 1;
-        }
-      }
-      final removed = compsOfEntity.removeAt(entityRow);
-      if (!toRemove.contains(_componentTypes[removed.runtimeType])) {
-        removedComps.add(removed);
-      }
-    }
-    removedComps.addAll(toAdd);
-    int newEntityRow = -1;
-    for (final compToAdd in removedComps) {
-      final componentID = _componentTypes[compToAdd.runtimeType]!;
-      _componentIndex[componentID] ??= {};
-      if (_componentIndex[componentID]![toArchetype.setHash] == null) {
-        _componentIndex[componentID]![toArchetype.setHash] = toArchetype.components.length;
-        toArchetype.components.add([]);
-      }
-
-      final componentsList =
-          toArchetype.components[_componentIndex[componentID]![toArchetype.setHash]!];
-      if (newEntityRow == -1) newEntityRow = componentsList.length;
-      componentsList.add(compToAdd);
-    }
-
-    _entityIndex[entityID] = Record(archetype: toArchetype, entityRow: newEntityRow);
-  }
-
-  void addComponent(EntityID entityID, Component component) {
-    component.entityID = entityID;
-    final componentID = _getOrCreateComponentID(component.runtimeType);
-
-    final record = _entityIndex.remove(entityID);
-
-    if (record == null) {
-      _componentIndex[componentID] ??= {};
-
-      final hash = SetHash({componentID});
-      final archetype = _getOrCreateArchetype(hash);
-
-      final indexMap = _componentIndex[componentID]!;
-      final columnIndex = indexMap[hash];
-
-      if (columnIndex == null) {
-        indexMap[hash] = archetype.components.length;
-        archetype.components.add([component]);
-        _entityIndex[entityID] = Record(
-          archetype: archetype,
-          entityRow: 0,
-        );
-      } else {
-        final componentsList = archetype.components[columnIndex];
-        _entityIndex[entityID] = Record(
-          archetype: archetype,
-          entityRow: componentsList.length,
-        );
-        componentsList.add(component);
-      }
-    } else {
-      _componentIndex[componentID] ??= {};
-
-      final oldArchetype = record.archetype;
-      final hash = oldArchetype.setHash.copy();
-      hash.add(componentID);
-      final archetype = _getOrCreateArchetype(hash);
-
-      _moveEntity(
-        entityID,
-        oldArchetype,
-        record.entityRow,
-        archetype,
-        toAdd: [component],
-      );
-    }
-  }
-
-  void addComponents(EntityID entityID, List<Component> components) {
-    final componentIDs = <ComponentID>{};
-
-    for (final component in components) {
-      component.entityID = entityID;
-      final id = _getOrCreateComponentID(component.runtimeType);
-      componentIDs.add(id);
-      _componentIndex[id] ??= {};
-    }
-
-    final record = _entityIndex.remove(entityID);
-
-    if (record == null) {
-      final hash = SetHash(componentIDs);
-      final archetype = _getOrCreateArchetype(hash);
-
-      for (final component in components) {
-        final id = _componentTypes[component.runtimeType]!;
-        final indexMap = _componentIndex[id]!;
-
-        if (indexMap[hash] == null) {
-          indexMap[hash] = archetype.components.length;
-          archetype.components.add([]);
-        }
-
-        archetype.components[indexMap[hash]!].add(component);
-      }
-
-      _entityIndex[entityID] = Record(
-        archetype: archetype,
-        entityRow: archetype.components[0].length - 1,
-      );
-    } else {
-      final oldArchetype = record.archetype;
-      final hash = oldArchetype.setHash.copy()..addAll(componentIDs);
-      final archetype = _getOrCreateArchetype(hash);
-
-      _moveEntity(
-        entityID,
-        oldArchetype,
-        record.entityRow,
-        archetype,
-        toAdd: components,
-      );
-    }
-  }
-
-  void removeComponent<T extends Component>(EntityID entityID) {
-    removeComponentByType(entityID, T);
-  }
-
-  void removeComponentByType(EntityID entityID, Type t) {
-    final record = _entityIndex[entityID];
-    if (record == null) return;
-
-    final componentID = _componentTypes[t];
-    if (componentID == null) return;
-    final oldArchetype = record.archetype;
-    final setHash = oldArchetype.setHash.copy();
-    if (!setHash.remove(componentID)) return;
-
-    if (setHash.isEmpty) {
-      _removeEntityFromArchetype(entityID, oldArchetype, record.entityRow);
-    } else {
-      final archetype = _getOrCreateArchetype(setHash);
-      _moveEntity(
-        entityID,
-        oldArchetype,
-        record.entityRow,
-        archetype,
-        toRemove: {componentID},
-      );
-    }
-  }
-
-  void removeComponents(EntityID entityID, {required List<Type> components}) {
-    final record = _entityIndex[entityID];
-    if (record == null) return;
-
-    final componentIDs = <ComponentID>{};
-
-    for (final type in components) {
-      final id = _componentTypes[type];
-      if (id != null) {
-        componentIDs.add(id);
-      }
-    }
-
-    if (componentIDs.isEmpty) return;
-
-    final oldArchetype = record.archetype;
-    final setHash = oldArchetype.setHash.copy();
-    if (!setHash.removeAll(componentIDs)) return;
-    if (setHash.isEmpty) {
-      _removeEntityFromArchetype(entityID, oldArchetype, record.entityRow);
-    } else {
-      final archetype = _getOrCreateArchetype(setHash);
-      _moveEntity(
-        entityID,
-        oldArchetype,
-        record.entityRow,
-        archetype,
-        toRemove: componentIDs,
-      );
-    }
-  }
-
-  int createEntityWith(List<Component> components) {
-    final entityID = createEntity();
-    final componentIDs = <ComponentID>[];
-
-    for (final component in components) {
-      component.entityID = entityID;
-      final id = _getOrCreateComponentID(component.runtimeType);
-      componentIDs.add(id);
-      _componentIndex[id] ??= {};
-    }
-
-    final hash = SetHash(componentIDs);
-    final archetype = _getOrCreateArchetype(hash);
-
-    for (int i = 0; i < components.length; i++) {
-      final componentID = componentIDs[i];
-      final component = components[i];
-
-      final indexMap = _componentIndex[componentID]!;
-      final col = indexMap[hash] ??= archetype.components.length;
-      if (col == archetype.components.length) {
-        archetype.components.add([]);
-      }
-      archetype.components[col].add(component);
-    }
-
-    _entityIndex[entityID] = Record(
-      archetype: archetype,
-      entityRow: archetype.components[0].length - 1,
-    );
-
-    return entityID;
-  }
-
-  List<EntityID> createEntities(List<List<Component>> entitiesComponents) {
-    final newEntities = <EntityID>[];
-
-    for (final components in entitiesComponents) {
-      newEntities.add(createEntityWith(components));
-    }
-
-    return newEntities;
-  }
+  // --- Queries ---
 
   void queryEach(
     QueryParams params,
@@ -584,5 +283,336 @@ class World {
       result.add(QueryRow(queryResults, i * len, params.typeIndices));
     }
     return result;
+  }
+}
+
+// --- INSTANT CHANGES TO THE WORLD ---
+
+class InstantChanges {
+  final World world;
+  InstantChanges(this.world);
+
+  bool removeEntity(EntityID entityID) {
+    if (!world.isAlive(entityID)) return false;
+    final record = world._entityIndex[entityID];
+    if (record == null) {
+      world._entityIndex.remove(entityID);
+      return true;
+    }
+    _removeEntityFromArchetype(entityID, record.archetype, record.entityRow);
+    return true;
+  }
+
+  void removeEntities(Iterable<EntityID> entities) {
+    final Map<Archetype, List<int>> rows = {};
+
+    for (final e in entities) {
+      final record = world._entityIndex.remove(e);
+      if (record == null) continue;
+      rows.putIfAbsent(record.archetype, () => []).add(record.entityRow);
+    }
+
+    for (final entry in rows.entries) {
+      final archetype = entry.key;
+      final rowsToRemove = entry.value..sort((a, b) => b.compareTo(a));
+
+      for (final row in rowsToRemove) {
+        for (final column in archetype.components) {
+          column.removeAt(row);
+        }
+      }
+
+      for (int i = 0; i < archetype.components[0].length; i++) {
+        final eid = archetype.components[0][i].entityID;
+        if (eid != -1) {
+          world._entityIndex[eid]!.entityRow = i;
+        }
+      }
+    }
+  }
+
+  void addComponent(EntityID entityID, Component component) {
+    component.entityID = entityID;
+    final componentID = _getOrCreateComponentID(component.runtimeType);
+
+    final record = world._entityIndex.remove(entityID);
+
+    if (record == null) {
+      world._componentIndex[componentID] ??= {};
+
+      final hash = SetHash({componentID});
+      final archetype = _getOrCreateArchetype(hash);
+
+      final indexMap = world._componentIndex[componentID]!;
+      final columnIndex = indexMap[hash];
+
+      if (columnIndex == null) {
+        indexMap[hash] = archetype.components.length;
+        archetype.components.add([component]);
+        world._entityIndex[entityID] = Record(
+          archetype: archetype,
+          entityRow: 0,
+        );
+      } else {
+        final componentsList = archetype.components[columnIndex];
+        world._entityIndex[entityID] = Record(
+          archetype: archetype,
+          entityRow: componentsList.length,
+        );
+        componentsList.add(component);
+      }
+    } else {
+      world._componentIndex[componentID] ??= {};
+
+      final oldArchetype = record.archetype;
+      final hash = oldArchetype.setHash.copy();
+      hash.add(componentID);
+      final archetype = _getOrCreateArchetype(hash);
+
+      _moveEntity(
+        entityID,
+        oldArchetype,
+        record.entityRow,
+        archetype,
+        toAdd: [component],
+      );
+    }
+  }
+
+  void addComponents(EntityID entityID, List<Component> components) {
+    final componentIDs = <ComponentID>{};
+
+    for (final component in components) {
+      component.entityID = entityID;
+      final id = _getOrCreateComponentID(component.runtimeType);
+      componentIDs.add(id);
+      world._componentIndex[id] ??= {};
+    }
+
+    final record = world._entityIndex.remove(entityID);
+
+    if (record == null) {
+      final hash = SetHash(componentIDs);
+      final archetype = _getOrCreateArchetype(hash);
+
+      for (final component in components) {
+        final id = world._componentTypes[component.runtimeType]!;
+        final indexMap = world._componentIndex[id]!;
+
+        if (indexMap[hash] == null) {
+          indexMap[hash] = archetype.components.length;
+          archetype.components.add([]);
+        }
+
+        archetype.components[indexMap[hash]!].add(component);
+      }
+
+      world._entityIndex[entityID] = Record(
+        archetype: archetype,
+        entityRow: archetype.components[0].length - 1,
+      );
+    } else {
+      final oldArchetype = record.archetype;
+      final hash = oldArchetype.setHash.copy()..addAll(componentIDs);
+      final archetype = _getOrCreateArchetype(hash);
+
+      _moveEntity(
+        entityID,
+        oldArchetype,
+        record.entityRow,
+        archetype,
+        toAdd: components,
+      );
+    }
+  }
+
+  void removeComponent<T extends Component>(EntityID entityID) {
+    removeComponentByType(entityID, T);
+  }
+
+  void removeComponentByType(EntityID entityID, Type t) {
+    final record = world._entityIndex[entityID];
+    if (record == null) return;
+
+    final componentID = world._componentTypes[t];
+    if (componentID == null) return;
+    final oldArchetype = record.archetype;
+    final setHash = oldArchetype.setHash.copy();
+    if (!setHash.remove(componentID)) return;
+
+    if (setHash.isEmpty) {
+      _removeEntityFromArchetype(entityID, oldArchetype, record.entityRow);
+    } else {
+      final archetype = _getOrCreateArchetype(setHash);
+      _moveEntity(
+        entityID,
+        oldArchetype,
+        record.entityRow,
+        archetype,
+        toRemove: {componentID},
+      );
+    }
+  }
+
+  void removeComponents(EntityID entityID, {required List<Type> components}) {
+    final record = world._entityIndex[entityID];
+    if (record == null) return;
+
+    final componentIDs = <ComponentID>{};
+
+    for (final type in components) {
+      final id = world._componentTypes[type];
+      if (id != null) {
+        componentIDs.add(id);
+      }
+    }
+
+    if (componentIDs.isEmpty) return;
+
+    final oldArchetype = record.archetype;
+    final setHash = oldArchetype.setHash.copy();
+    if (!setHash.removeAll(componentIDs)) return;
+    if (setHash.isEmpty) {
+      _removeEntityFromArchetype(entityID, oldArchetype, record.entityRow);
+    } else {
+      final archetype = _getOrCreateArchetype(setHash);
+      _moveEntity(
+        entityID,
+        oldArchetype,
+        record.entityRow,
+        archetype,
+        toRemove: componentIDs,
+      );
+    }
+  }
+
+  int createEntityWith(List<Component> components) {
+    final entityID = world.createEntity();
+    final componentIDs = <ComponentID>[];
+
+    for (final component in components) {
+      component.entityID = entityID;
+      final id = _getOrCreateComponentID(component.runtimeType);
+      componentIDs.add(id);
+      world._componentIndex[id] ??= {};
+    }
+
+    final hash = SetHash(componentIDs);
+    final archetype = _getOrCreateArchetype(hash);
+
+    for (int i = 0; i < components.length; i++) {
+      final componentID = componentIDs[i];
+      final component = components[i];
+
+      final indexMap = world._componentIndex[componentID]!;
+      final col = indexMap[hash] ??= archetype.components.length;
+      if (col == archetype.components.length) {
+        archetype.components.add([]);
+      }
+      archetype.components[col].add(component);
+    }
+
+    world._entityIndex[entityID] = Record(
+      archetype: archetype,
+      entityRow: archetype.components[0].length - 1,
+    );
+
+    return entityID;
+  }
+
+  List<EntityID> createEntities(List<List<Component>> entitiesComponents) {
+    final newEntities = <EntityID>[];
+
+    for (final components in entitiesComponents) {
+      newEntities.add(createEntityWith(components));
+    }
+
+    return newEntities;
+  }
+
+  ComponentID _getOrCreateComponentID(Type type) {
+    final id = world._componentTypes[type];
+    if (id != null) return id;
+    world._componentTypes[type] = world._componentCounter;
+    world._componentCounter++;
+    return world._componentTypes[type]!;
+  }
+
+  Archetype _getOrCreateArchetype(SetHash setHash) {
+    Archetype? archetype = world._archetypeIndex[setHash];
+    if (archetype != null) return archetype;
+    archetype = Archetype(
+      setHash: setHash,
+      components: [],
+    );
+
+    world._archetypeIndex[setHash] = archetype;
+    return archetype;
+  }
+
+  void _removeEntityFromArchetype(
+    EntityID entityID,
+    Archetype fromArchetype,
+    int entityRow,
+  ) {
+    bool recordsFixed = false;
+    for (final compsOfEntity in fromArchetype.components) {
+      if (!recordsFixed) {
+        recordsFixed = true;
+        final compsAfter = compsOfEntity.sublist(entityRow + 1);
+        for (final compToDecrease in compsAfter) {
+          if (compToDecrease.entityID != -1) {
+            world._entityIndex[compToDecrease.entityID]?.entityRow -= 1;
+          }
+        }
+      }
+      compsOfEntity.removeAt(entityRow);
+    }
+
+    world._entityIndex.remove(entityID);
+  }
+
+  void _moveEntity(
+    EntityID entityID,
+    Archetype fromArchetype,
+    int entityRow,
+    Archetype toArchetype, {
+    List<Component> toAdd = const [],
+    Set<ComponentID> toRemove = const {},
+  }) {
+    bool recordsFixed = false;
+    final removedComps = <Component>[];
+    for (final compsOfEntity in fromArchetype.components) {
+      if (!recordsFixed) {
+        recordsFixed = true;
+        final compsAfter = compsOfEntity.sublist(entityRow + 1);
+        for (final compToDecrease in compsAfter) {
+          if (compToDecrease.entityID != -1) {
+            world._entityIndex[compToDecrease.entityID]?.entityRow -= 1;
+          }
+        }
+      }
+      final removed = compsOfEntity.removeAt(entityRow);
+      if (!toRemove.contains(world._componentTypes[removed.runtimeType])) {
+        removedComps.add(removed);
+      }
+    }
+    removedComps.addAll(toAdd);
+    int newEntityRow = -1;
+    for (final compToAdd in removedComps) {
+      final componentID = world._componentTypes[compToAdd.runtimeType]!;
+      world._componentIndex[componentID] ??= {};
+      if (world._componentIndex[componentID]![toArchetype.setHash] == null) {
+        world._componentIndex[componentID]![toArchetype.setHash] = toArchetype.components.length;
+        toArchetype.components.add([]);
+      }
+
+      final componentsList =
+          toArchetype.components[world._componentIndex[componentID]![toArchetype.setHash]!];
+      if (newEntityRow == -1) newEntityRow = componentsList.length;
+      componentsList.add(compToAdd);
+    }
+
+    world._entityIndex[entityID] = Record(archetype: toArchetype, entityRow: newEntityRow);
   }
 }

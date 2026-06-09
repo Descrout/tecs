@@ -27,7 +27,7 @@ import 'package:tecs/tecs.dart';
 final world = World();
 
 // Reset and Clear the World
-world.clear();
+world.clearAll();
 ```
 ## Entities
 ```dart
@@ -36,9 +36,9 @@ final entity1 = world.createEntity();
 final entity2 = world.createEntity();
 
 // Remove Entities
-world.removeEntity(entity1); // returns true
-world.removeEntity(entity2); // returns true
-world.removeEntity(entity1); // returns false, entity1 is not alive
+world.instant.removeEntity(entity1); // returns true
+world.instant.removeEntity(entity2); // returns true
+world.instant.removeEntity(entity1); // returns false, entity1 is not alive
 ```
 ```dart
 // Check Entity Status
@@ -51,7 +51,7 @@ if(entity1Status) {
 ```
 ```dart
 // Create entities in bulk
-final entityIDs = world.createEntities([
+final entityIDs = world.instant.createEntities([
 	[NameComponent(name: "Entity1"), PositionComponent(x:  10.0, y:  20.0)],
 	[NameComponent(name: "Entity2"), PositionComponent(x:  30.0, y:  40.0)],
 	[NameComponent(name: "Entity3"), PositionComponent(x:  50.0, y:  60.0)],
@@ -83,11 +83,11 @@ class VelocityComponent extends Component {
 ```
 ```dart
 // Add a component to an entity
-world.addComponent(entity1, PositionComponent(x: 150, y: 150));
-world.addComponent(entity1, VelocityComponent(x: -800, y: 400));
+world.instant.addComponent(entity1, PositionComponent(x: 150, y: 150));
+world.instant.addComponent(entity1, VelocityComponent(x: -800, y: 400));
 
 // Add components to an entity in bulk
-world.addComponents(entity1, components: [
+world.instant.addComponents(entity1, components: [
   PositionComponent(x: 150, y: 150),
   VelocityComponent(x: -800, y: 400),
 ]);
@@ -99,11 +99,11 @@ final velocity = world.getComponent<VelocityComponent>(entity1);
 ```
 ```dart
 // Remove a component
-world.removeComponent<PositionComponent>(entity1);
-world.removeComponent<VelocityComponent>(entity1);
+world.instant.removeComponent<PositionComponent>(entity1);
+world.instant.removeComponent<VelocityComponent>(entity1);
 
 // Remove components in bulk
-world.removeComponents(entity1, components: [
+world.instant.removeComponents(entity1, components: [
   PositionComponent,
   VelocityComponent,
 ]);
